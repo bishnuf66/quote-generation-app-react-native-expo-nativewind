@@ -1,6 +1,7 @@
-import axios from "axios";
+
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   ActivityIndicator,
   ScrollView,
@@ -9,10 +10,10 @@ import {
   View,
 } from "react-native";
 
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { useQuotes } from "@/context/QuotesContext";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { ThemedText } from "../components/ThemedText";
+import { ThemedView } from "../components/ThemedView";
+import { useQuotes } from "../context/QuotesContext";
+import { useColorScheme } from "../hooks/useColorScheme";
 
 type Category =
   | "inspirational"
@@ -84,10 +85,11 @@ export default function GenerateScreen() {
   const handleSaveQuote = () => {
     if (quote) {
       addQuote({
+        id: Date.now().toString(),
         text: quote.text,
         author: quote.author,
-        category: selectedCategory,
         backgroundImage: "https://source.unsplash.com/random/800x600/?nature",
+        createdAt: new Date(),
       });
       router.push("/customize");
     }
@@ -100,12 +102,12 @@ export default function GenerateScreen() {
   return (
     <ScrollView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">Generate Quotes</ThemedText>
+        <ThemedText>Generate Quotes</ThemedText>
         <ThemedText>Select a category and generate random quotes</ThemedText>
       </ThemedView>
 
       <ThemedView style={styles.categoriesContainer}>
-        <ThemedText type="subtitle">Categories</ThemedText>
+        <ThemedText>Categories</ThemedText>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

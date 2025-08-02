@@ -1,14 +1,15 @@
-import React, { useState, useRef } from 'react';
+
 import { StyleSheet, View, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import React, { useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import ViewShot, { ViewShotProperties } from 'react-native-view-shot';
 import Draggable from 'react-native-draggable';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useQuotes } from '@/context/QuotesContext';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedText } from '../components/ThemedText';
+import { ThemedView } from '../components/ThemedView';
+import { useQuotes } from '../context/QuotesContext';
+import { useColorScheme } from '../hooks/useColorScheme';
 
 const backgroundImages = [
   'https://source.unsplash.com/random/800x600/?nature',
@@ -102,7 +103,7 @@ export default function CustomizeScreen() {
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">Customize Quote</ThemedText>
+        <ThemedText>Customize Quote</ThemedText>
         <TouchableOpacity style={styles.toggleButton} onPress={toggleQuoteMode}>
           <ThemedText style={styles.toggleButtonText}>
             {isCustomQuote ? 'Use Generated Quote' : 'Create Custom Quote'}
@@ -177,7 +178,7 @@ export default function CustomizeScreen() {
       </ThemedView>
 
       <ThemedView style={styles.backgroundSelector}>
-        <ThemedText type="subtitle">Select Background</ThemedText>
+        <ThemedText>Select Background</ThemedText>
         <View style={styles.backgroundOptions}>
           {backgroundImages.map((image, index) => (
             <TouchableOpacity

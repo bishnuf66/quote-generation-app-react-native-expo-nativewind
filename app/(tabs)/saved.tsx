@@ -1,15 +1,14 @@
-import React from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Alert, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useQuotes } from '@/context/QuotesContext';
+import { ThemedText } from '../components/ThemedText';
+import { ThemedView } from '../components/ThemedView';
+import { useQuotes } from '../context/QuotesContext';
 
 export default function SavedScreen() {
   const router = useRouter();
-  const { savedQuotes, deleteQuote } = useQuotes();
+  const { quotes, deleteQuote } = useQuotes();
 
   const handleDeleteQuote = (id: string) => {
     Alert.alert(
@@ -37,11 +36,11 @@ export default function SavedScreen() {
   return (
     <ScrollView style={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">Saved Quotes</ThemedText>
+        <ThemedText>Saved Quotes</ThemedText>
         <ThemedText>Your collection of saved quotes</ThemedText>
       </ThemedView>
 
-      {savedQuotes.length === 0 ? (
+      {quotes.length === 0 ? (
         <ThemedView style={styles.emptyContainer}>
           <ThemedText>No saved quotes yet.</ThemedText>
           <ThemedText>Generate or create a quote and save it to see it here.</ThemedText>
@@ -54,11 +53,11 @@ export default function SavedScreen() {
         </ThemedView>
       ) : (
         <ThemedView style={styles.quotesContainer}>
-          {savedQuotes.map((quote) => (
+          {quotes.map((quote) => (
             <ThemedView key={quote.id} style={styles.quoteCard}>
               <View style={styles.quoteImageContainer}>
                 <Image 
-                  source={{ uri: quote.backgroundImage || quote.customImage }} 
+                  source={{ uri: quote.backgroundImage || quote.backgroundImage }} 
                   style={styles.quoteImage} 
                 />
                 <View style={styles.quoteTextOverlay}>

@@ -1,5 +1,13 @@
 {
   "expo": {
+    "android": {
+      "package": "com.ghost.quotesapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true
+    },
     "name": "QuotesApp",
     "slug": "QuotesApp",
     "version": "1.0.0",
@@ -11,13 +19,7 @@
     "ios": {
       "supportsTablet": true
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
-    },
+
     "web": {
       "bundler": "metro",
       "output": "static",
