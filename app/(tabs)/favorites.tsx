@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
+import { ActivityIndicator } from "react-native";
 import {
   Alert,
   Dimensions,
@@ -45,6 +46,34 @@ export default function FavoritesScreen() {
   const [loadingImages, setLoadingImages] = useState<{
     [key: string]: boolean;
   }>({});
+
+  const handleImageError = (url: string) => {
+    console.log('Image error for URL:', url);
+    const fullUrl = getImageUrl(url);
+    setFailedImageUrls(prev => {
+      const newSet = new Set(prev);
+      newSet.add(fullUrl);
+      return newSet;
+    });
+  };
+
+  const handleImageLoadStart = (url: string) => {
+    console.log('Image load started:', url);
+    const fullUrl = getImageUrl(url);
+    setLoadingImages(prev => ({
+      ...prev,
+      [fullUrl]: true
+    }));
+  };
+
+  const handleImageLoadEnd = (url: string) => {
+    console.log('Image load ended:', url);
+    const fullUrl = getImageUrl(url);
+    setLoadingImages(prev => ({
+      ...prev,
+      [fullUrl]: false
+    }));
+  };
 
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
@@ -376,22 +405,62 @@ export default function FavoritesScreen() {
                 }}
               >
                 {/* Image with overlay */}
-                <View className="relative aspect-square">
-                  <View className="w-full h-full bg-gray-200 dark:bg-gray-700">
-                    <Image
-                      source={quote.backgroundImage}
-                      className="w-full h-full"
-                      contentFit="cover"
-                      transition={200}
-                    />
-                  </View>
-
-                  <View className="w-full h-full bg-gray-200 dark:bg-gray-700 items-center justify-center">
-                    <Ionicons name="image-outline" size={48} color="#9ca3af" />
-                    <Text className="text-gray-500 mt-2 text-center px-2">
-                      Image not available
-                    </Text>
-                  </View>
+                <View className="relative aspect-square bg-gray-200 dark:bg-gray-700">
+                  {quote.backgroundImage ? (
+                    <>
+                      <Image
+                        source={{ 
+                          uri: getImageUrl(quote.backgroundImage)
+                        }}
+                        className="w-full h-full"
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                        }}
+                        contentFit="cover"
+                        transition={200}
+                        onError={() => {
+                          console.log('Error loading image:', quote.backgroundImage);
+                          if (quote.backgroundImage) {
+                            handleImageError(quote.backgroundImage);
+                          }
+                        }}
+                        onLoadStart={() => {
+                          if (quote.backgroundImage) {
+                            handleImageLoadStart(quote.backgroundImage);
+                          }
+                        }}
+                        onLoadEnd={() => {
+                          if (quote.backgroundImage) {
+                            handleImageLoadEnd(quote.backgroundImage);
+                          }
+                        }}
+                      />
+                      {loadingImages[getImageUrl(quote.backgroundImage)] && (
+                        <View className="absolute inset-0 bg-black/30 items-center justify-center">
+                          <ActivityIndicator color="#ffffff" size="large" />
+                        </View>
+                      )}
+                      {failedImageUrls.has(getImageUrl(quote.backgroundImage)) && (
+                        <View className="absolute inset-0 bg-gray-200 dark:bg-gray-700 items-center justify-center">
+                          <Ionicons name="image-outline" size={48} color="#9ca3af" />
+                          <Text className="text-gray-500 mt-2 text-center px-2">
+                            Couldn't load image
+                          </Text>
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <View className="w-full h-full items-center justify-center">
+                      <Ionicons name="image-outline" size={48} color="#9ca3af" />
+                      <Text className="text-gray-500 mt-2 text-center px-2">
+                        No image available
+                      </Text>
+                    </View>
+                  )}
 
                   <View className="absolute inset-0 bg-black/30 p-4 justify-end">
                     <Text
