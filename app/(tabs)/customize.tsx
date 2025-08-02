@@ -5,12 +5,14 @@ import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
+  Dimensions,
+  PanResponder,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import Draggable from "react-native-draggable";
 import ViewShot from "react-native-view-shot";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -18,10 +20,14 @@ import { ThemedView } from "@/components/ThemedView";
 import { useQuotes } from "@/context/QuotesContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
+const { width: screenWidth } = Dimensions.get("window");
+const IMAGE_HEIGHT = 300;
+const IMAGE_WIDTH = screenWidth - 40; // Accounting for padding
+
 export default function CustomizeScreen() {
   const { quotes, saveQuote, updateQuotePosition, saveToDevice } = useQuotes();
   const colorScheme = useColorScheme();
-  const viewShotRef = useRef<any>(null);
+  const viewShotRef = useRef(null);
   const params = useLocalSearchParams();
 
   // State for quote, author, image, and draggable position
@@ -30,8 +36,17 @@ export default function CustomizeScreen() {
   const [selectedImage, setSelectedImage] = useState("");
   const [isCustomQuote, setIsCustomQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(null);
-  const [dragPos, setDragPos] = useState({ x: 50, y: 50 });
-  // Update state whenever params change (for navigation from saved or generate tab)
+  const [textDimensions, setTextDimensions] = useState({
+    width: 250,
+    height: 80,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Animated values for position and scale
+  const pan = useRef(new Animated.ValueXY({ x: 50, y: 50 })).current;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  // Update state whenever params change
   useEffect(() => {
     if (params && (params.text || params.author || params.backgroundImage)) {
       setCustomText(params.text ? String(params.text) : "");
@@ -39,27 +54,89 @@ export default function CustomizeScreen() {
       setSelectedImage(
         params.backgroundImage ? String(params.backgroundImage) : ""
       );
-      setIsCustomQuote(true); // Open in edit mode
-      setCurrentQuote(null); // Not using context quote
-      setDragPos({ x: 50, y: 50 });
+      setIsCustomQuote(true);
+      setCurrentQuote(null);
+
+      // Set initial position from params or center
+      const initialX = params.textPosition?.x || IMAGE_WIDTH / 2 - 125;
+      const initialY = params.textPosition?.y || IMAGE_HEIGHT / 2 - 40;
+      pan.setValue({ x: initialX, y: initialY });
     } else if (quotes.length > 0) {
-      // Fallback to last quote in context
       const last = quotes[quotes.length - 1];
       setCustomText(last.text || "");
       setCustomAuthor(last.author || "");
       setSelectedImage(last.backgroundImage || "");
       setIsCustomQuote(true);
       setCurrentQuote(last);
-      setDragPos(last.textPosition || { x: 50, y: 50 });
+
+      const savedPos = last.textPosition || {
+        x: IMAGE_WIDTH / 2 - 125,
+        y: IMAGE_HEIGHT / 2 - 40,
+      };
+      pan.setValue({ x: savedPos.x, y: savedPos.y });
     } else {
       setCustomText("");
       setCustomAuthor("");
       setSelectedImage("");
       setIsCustomQuote(true);
       setCurrentQuote(null);
-      setDragPos({ x: 50, y: 50 });
+      pan.setValue({ x: IMAGE_WIDTH / 2 - 125, y: IMAGE_HEIGHT / 2 - 40 });
     }
   }, [params.text, params.author, params.backgroundImage, quotes.length]);
+
+  // Create PanResponder for drag functionality
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        setIsDragging(true);
+        // Animate scale up when dragging starts
+        Animated.spring(scale, {
+          toValue: 1.1,
+          useNativeDriver: false,
+        }).start();
+
+        pan.setOffset({
+          x: pan.x._value,
+          y: pan.y._value,
+        });
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // Calculate new position
+        const newX = gestureState.dx;
+        const newY = gestureState.dy;
+
+        // Apply constraints to keep text within image bounds
+        const minX = -pan.x._offset;
+        const maxX = IMAGE_WIDTH - textDimensions.width - pan.x._offset;
+        const minY = -pan.y._offset;
+        const maxY = IMAGE_HEIGHT - textDimensions.height - pan.y._offset;
+
+        const constrainedX = Math.max(minX, Math.min(maxX, newX));
+        const constrainedY = Math.max(minY, Math.min(maxY, newY));
+
+        pan.setValue({ x: constrainedX, y: constrainedY });
+      },
+      onPanResponderRelease: () => {
+        setIsDragging(false);
+        // Animate scale back to normal
+        Animated.spring(scale, {
+          toValue: 1,
+          useNativeDriver: false,
+        }).start();
+
+        pan.flattenOffset();
+
+        // Update position in context if we have a current quote
+        if (currentQuote) {
+          updateQuotePosition(currentQuote.id, {
+            x: pan.x._value,
+            y: pan.y._value,
+          });
+        }
+      },
+    })
+  ).current;
 
   // Handle image selection from gallery
   const pickImage = async () => {
@@ -82,18 +159,10 @@ export default function CustomizeScreen() {
     }
   };
 
-  // Handle text position update
-  const handleDragRelease = (e, gestureState) => {
-    setDragPos({
-      x: gestureState.moveX || dragPos.x,
-      y: gestureState.moveY || dragPos.y,
-    });
-    if (currentQuote) {
-      updateQuotePosition(currentQuote.id, {
-        x: gestureState.moveX,
-        y: gestureState.moveY,
-      });
-    }
+  // Handle text layout to get dimensions for boundary calculations
+  const onTextLayout = (event) => {
+    const { width, height } = event.nativeEvent.layout;
+    setTextDimensions({ width: width + 20, height: height + 20 }); // Add padding
   };
 
   // Save the customized quote
@@ -110,7 +179,6 @@ export default function CustomizeScreen() {
   };
 
   const handleAddToFavorites = async () => {
-    // Save the current custom state as a new favorite
     if (customText.trim() !== "") {
       const newQuote = {
         id: Date.now().toString(),
@@ -118,7 +186,7 @@ export default function CustomizeScreen() {
         author: customAuthor,
         backgroundImage: selectedImage,
         createdAt: new Date().toISOString(),
-        textPosition: dragPos,
+        textPosition: { x: pan.x._value, y: pan.y._value },
       };
       try {
         await saveQuote(newQuote);
@@ -131,11 +199,22 @@ export default function CustomizeScreen() {
     }
   };
 
+  // Reset position to center
+  const resetPosition = () => {
+    Animated.spring(pan, {
+      toValue: { x: IMAGE_WIDTH / 2 - 125, y: IMAGE_HEIGHT / 2 - 40 },
+      useNativeDriver: false,
+    }).start();
+  };
+
   return (
     <ThemedView style={styles.container}>
       <View contentContainerStyle={{ paddingBottom: 40 }}>
         <ThemedView style={styles.header}>
-          <ThemedText>Customize Quote</ThemedText>
+          <ThemedText style={styles.headerText}>Customize Quote</ThemedText>
+          <ThemedText style={styles.instructionText}>
+            Drag the quote to position it anywhere on the image
+          </ThemedText>
         </ThemedView>
 
         {isCustomQuote ? (
@@ -187,56 +266,96 @@ export default function CustomizeScreen() {
               <View
                 style={[
                   styles.backgroundImage,
-                  { backgroundColor: "transparent" },
+                  {
+                    backgroundColor:
+                      colorScheme === "dark" ? "#333" : "#f0f0f0",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
                 ]}
-              />
-            )}
-            <View style={styles.customTextContainer}>
-              <Draggable
-                x={dragPos.x}
-                y={dragPos.y}
-                onDragRelease={handleDragRelease}
               >
-                <View style={styles.textContainer}>
+                <ThemedText style={styles.placeholderText}>
+                  Select an image below
+                </ThemedText>
+              </View>
+            )}
+
+            {(customText || currentQuote) && (
+              <Animated.View
+                {...panResponder.panHandlers}
+                style={[
+                  styles.draggableContainer,
+                  {
+                    transform: [
+                      { translateX: pan.x },
+                      { translateY: pan.y },
+                      { scale: scale },
+                    ],
+                  },
+                ]}
+                onLayout={onTextLayout}
+              >
+                <View
+                  style={[
+                    styles.textContainer,
+                    isDragging && styles.textContainerDragging,
+                  ]}
+                >
                   <ThemedText style={styles.quoteText}>
-                    &quot;{customText}&quot;
+                    "{customText || currentQuote?.text}"
                   </ThemedText>
-                  {customAuthor ? (
+                  {(customAuthor || currentQuote?.author) && (
                     <ThemedText style={styles.authorText}>
-                      - {customAuthor}
+                      - {customAuthor || currentQuote?.author}
                     </ThemedText>
-                  ) : null}
+                  )}
                 </View>
-              </Draggable>
-            </View>
+                {/* Drag handle indicator */}
+                <View
+                  style={[
+                    styles.dragHandle,
+                    isDragging && styles.dragHandleActive,
+                  ]}
+                >
+                  <FontAwesome
+                    name="arrows"
+                    size={12}
+                    color={isDragging ? "#fff" : "rgba(255,255,255,0.8)"}
+                  />
+                </View>
+              </Animated.View>
+            )}
           </ViewShot>
         </ThemedView>
 
-        <View style={{ alignItems: "center", marginBottom: 20 }}>
-          <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-            <ThemedText style={styles.uploadButtonText}>+</ThemedText>
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity style={styles.resetButton} onPress={resetPosition}>
+            <FontAwesome name="crosshairs" size={16} color="#666" />
+            <ThemedText style={styles.resetButtonText}>Center</ThemedText>
           </TouchableOpacity>
-          <ThemedText style={{ marginTop: 8 }}>
-            Select Image from Gallery
-          </ThemedText>
+
+          <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+            <FontAwesome name="image" size={20} color="#666" />
+            <ThemedText style={styles.uploadText}>Select Image</ThemedText>
+          </TouchableOpacity>
         </View>
 
-        <View className="flex-row justify-around mt-5">
+        <View style={styles.actionContainer}>
           <TouchableOpacity
-            className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
+            style={[styles.actionButton, styles.favoriteButton]}
             onPress={handleAddToFavorites}
           >
             <FontAwesome name="heart" size={16} color="white" />
-            <ThemedText className="text-white font-bold ml-2">
+            <ThemedText style={styles.actionButtonText}>
               Add to Favorites
             </ThemedText>
           </TouchableOpacity>
           <TouchableOpacity
-            className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
+            style={[styles.actionButton, styles.saveButton]}
             onPress={handleSaveToDevice}
           >
             <FontAwesome name="save" size={16} color="white" />
-            <ThemedText className="text-white font-bold ml-2">
+            <ThemedText style={styles.actionButtonText}>
               Save to Device
             </ThemedText>
           </TouchableOpacity>
@@ -256,16 +375,15 @@ const styles = StyleSheet.create({
     marginTop: 50,
     marginBottom: 20,
   },
-  toggleButton: {
-    marginTop: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#1D3D47",
-  },
-  toggleButtonText: {
-    color: "white",
+  headerText: {
+    fontSize: 24,
     fontWeight: "bold",
+    marginBottom: 5,
+  },
+  instructionText: {
+    fontSize: 14,
+    opacity: 0.7,
+    textAlign: "center",
   },
   inputContainer: {
     marginBottom: 20,
@@ -273,10 +391,11 @@ const styles = StyleSheet.create({
   textInput: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 10,
-    minHeight: 40,
+    minHeight: 50,
+    fontSize: 16,
   },
   quoteInfo: {
     marginBottom: 20,
@@ -290,54 +409,134 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   imageContainer: {
-    height: 300,
+    height: IMAGE_HEIGHT,
     marginBottom: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#ddd",
   },
   viewShot: {
     flex: 1,
+    position: "relative",
   },
   backgroundImage: {
     flex: 1,
     width: "100%",
     height: "100%",
   },
-  customTextContainer: {
+  placeholderText: {
+    fontSize: 16,
+    opacity: 0.5,
+  },
+  draggableContainer: {
     position: "absolute",
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
   },
   textContainer: {
-    padding: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 5,
-    maxWidth: 250,
+    padding: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    borderRadius: 8,
+    maxWidth: 280,
+    minWidth: 200,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  textContainerDragging: {
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    shadowOpacity: 0.4,
+    elevation: 8,
   },
   quoteText: {
     color: "white",
     fontSize: 16,
     fontStyle: "italic",
     textAlign: "center",
+    lineHeight: 22,
   },
   authorText: {
     color: "white",
     fontSize: 12,
     textAlign: "right",
-    marginTop: 5,
+    marginTop: 8,
+    fontWeight: "500",
   },
-  uploadButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 5,
-    backgroundColor: "#ddd",
+  dragHandle: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
-  uploadButtonText: {
-    fontSize: 24,
+  dragHandleActive: {
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    borderColor: "rgba(255, 255, 255, 0.6)",
+  },
+  controlsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  resetButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#f0f0f0",
+  },
+  resetButtonText: {
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  uploadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#f0f0f0",
+  },
+  uploadText: {
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  actionContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  actionButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    minWidth: 140,
+    justifyContent: "center",
+  },
+  favoriteButton: {
+    backgroundColor: "#3b82f6",
+  },
+  saveButton: {
+    backgroundColor: "#059669",
+  },
+  actionButtonText: {
+    color: "white",
     fontWeight: "bold",
+    marginLeft: 8,
+    fontSize: 14,
   },
 });
