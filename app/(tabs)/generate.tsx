@@ -235,25 +235,28 @@ export default function GenerateScreen() {
     if (quote && backgroundUrl) {
       // Ensure we have a valid URL (add https:// if missing)
       let imageUrl = backgroundUrl;
-      if (imageUrl && !imageUrl.startsWith('http')) {
+      if (imageUrl && !imageUrl.startsWith("http")) {
         imageUrl = `https:${imageUrl}`;
       }
-      
+
       const newQuote = {
         id: Date.now().toString(),
         text: quote.text,
-        author: quote.author || 'Unknown',
+        author: quote.author || "Unknown",
         backgroundImage: imageUrl, // Use the processed URL
         createdAt: new Date().toISOString(),
         category: selectedQuoteCategory,
         imageCategory: selectedImageCategory,
       };
-      
-      console.log('Saving quote with image URL:', imageUrl); // Debug log
+
+      console.log("Saving quote with image URL:", imageUrl); // Debug log
       saveQuote(newQuote);
       Alert.alert("Success", "Quote saved to favorites!");
     } else {
-      Alert.alert("Error", "Cannot save quote: Missing quote or background image");
+      Alert.alert(
+        "Error",
+        "Cannot save quote: Missing quote or background image"
+      );
     }
   };
 
@@ -376,7 +379,7 @@ export default function GenerateScreen() {
                   handleNewBackground();
                   generateNewQuoteAndImage(selectedQuoteCategory);
                 }}
-                className="p-1"
+                className="p-"
               >
                 <FontAwesome name="refresh" size={16} color="#06b6d4" />
               </TouchableOpacity>
@@ -389,7 +392,7 @@ export default function GenerateScreen() {
               {imageCategories.map((category) => (
                 <TouchableOpacity
                   key={category.id}
-                  className={`p-2 rounded-lg items-center ${selectedImageCategory === category.id ? "bg-cyan-600/30 border border-cyan-500" : "bg-white/10"}`}
+                  className={`p-2 rounded-lg mx-1 w-16 h-14 items-center ${selectedImageCategory === category.id ? "bg-cyan-600/30 border border-cyan-500" : "bg-white/10"}`}
                   onPress={handleImageCategoryPress(category.id)}
                 >
                   <FontAwesome

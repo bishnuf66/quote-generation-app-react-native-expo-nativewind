@@ -96,6 +96,23 @@ export const QuotesProvider = ({ children }: QuotesProviderProps) => {
     return newQuote.id;
   };
 
+  const normalizeImageUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined;
+    
+    // If it's already a valid URL, return as is
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('file://')) {
+      return url;
+    }
+    
+    // If it starts with //, add https:
+    if (url.startsWith('//')) {
+      return `https:${url}`;
+    }
+    
+    // Otherwise, assume it's a full URL without protocol
+    return `https://${url}`;
+  };
+
   const saveQuote = async (quote: Omit<QuoteType, 'id' | 'createdAt'>) => {
     setSavedQuotes((prev) => {
       const newQuote: QuoteType = {
@@ -103,12 +120,11 @@ export const QuotesProvider = ({ children }: QuotesProviderProps) => {
         id: Date.now().toString(),
         createdAt: new Date(),
         // Ensure backgroundImage is properly formatted
-        backgroundImage: quote.backgroundImage?.startsWith('http') 
-          ? quote.backgroundImage 
-          : quote.backgroundImage?.startsWith('file://') 
-            ? quote.backgroundImage 
-            : `https:${quote.backgroundImage}`,
+        backgroundImage: normalizeImageUrl(quote.backgroundImage),
       };
+      
+      console.log('Saving quote with image URL:', newQuote.backgroundImage); // Debug log
+      
       // Avoid adding duplicates if the user spams the button
       if (prev.some(q => q.text === newQuote.text && q.author === newQuote.author)) {
         return prev;

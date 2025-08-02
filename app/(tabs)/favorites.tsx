@@ -4,6 +4,7 @@ import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   ScrollView,
@@ -37,18 +38,41 @@ type QuoteType = {
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { savedQuotes, deleteQuote } = useQuotes();
+  const { savedQuotes, deleteQuote, quotes, updateQuotePosition } = useQuotes();
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(new Set());
+  const [loadingImages, setLoadingImages] = useState<{[key: string]: boolean}>({});
   
   // Ensure we have a valid image URL
   const getImageUrl = (url: string | undefined): string => {
     if (!url) return '';
-    // If it's already a full URL or a local file, return as is
-    if (url.startsWith('http') || url.startsWith('file://') || url.startsWith('data:')) {
+    
+    // If it's already a valid URL, return as is
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('file://')) {
       return url;
     }
-    // Otherwise, assume it's a path that needs https
-    return `https:${url}`;
+    
+    // If it starts with //, add https:
+    if (url.startsWith('//')) {
+      return `https:${url}`;
+    }
+    
+    // If it's a data URL, return as is
+    if (url.startsWith('data:')) {
+      return url;
+    }
+    
+    // If it's a relative URL, try to make it absolute
+    if (url.startsWith('/')) {
+      return `https:${url}`;
+    }
+    
+    // If it's a Pexels URL without protocol
+    if (url.includes('images.pexels.com')) {
+      return `https:${url}`;
+    }
+    
+    // Otherwise, assume it's a full URL without protocol
+    return `https://${url}`;
   };
   
   // Check if we should show the image or fallback
@@ -62,11 +86,34 @@ export default function FavoritesScreen() {
   const handleImageError = (url: string) => {
     if (!url) return;
     const fullUrl = getImageUrl(url);
+    console.log('Image failed to load, adding to failed set:', fullUrl);
+    
+    setLoadingImages(prev => ({
+      ...prev,
+      [fullUrl]: false
+    }));
+    
     setFailedImageUrls(prev => {
       const newSet = new Set(prev);
       newSet.add(fullUrl);
       return newSet;
     });
+  };
+  
+  const handleImageLoadStart = (url: string) => {
+    const fullUrl = getImageUrl(url);
+    setLoadingImages(prev => ({
+      ...prev,
+      [fullUrl]: true
+    }));
+  };
+  
+  const handleImageLoadEnd = (url: string) => {
+    const fullUrl = getImageUrl(url);
+    setLoadingImages(prev => ({
+      ...prev,
+      [fullUrl]: false
+    }));
   };
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
@@ -146,14 +193,46 @@ export default function FavoritesScreen() {
       },
       {
         text: "Delete",
-        onPress: () => deleteQuote(id),
+        onPress: () => {
+          deleteQuote(id);
+          // Also remove from failed images set if it exists
+          const quote = savedQuotes.find(q => q.id === id);
+          if (quote?.backgroundImage) {
+            const fullUrl = getImageUrl(quote.backgroundImage);
+            setFailedImageUrls(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(fullUrl);
+              return newSet;
+            });
+          }
+        },
         style: "destructive",
       },
     ]);
   };
 
-  const handleEditQuote = (id: string) => {
-    router.push({ pathname: "/customize", params: { quoteId: id } });
+  const handleEditQuote = (quote: QuoteType) => {
+    // First update the current quote in the context
+    const existingQuote = quotes.find(q => q.id === quote.id);
+    if (!existingQuote) {
+      // If not in quotes, add it with default position
+      const newQuote = {
+        ...quote,
+        textPosition: { x: 50, y: 50 } // Default position if not set
+      };
+      updateQuotePosition(newQuote.id, newQuote.textPosition);
+    }
+    
+    // Navigate to customize tab with the quote data
+    router.push({
+      pathname: "/customize",
+      params: { 
+        quoteId: quote.id,
+        text: quote.text,
+        author: quote.author || '',
+        backgroundImage: quote.backgroundImage || ''
+      }
+    });
   };
 
   const handleShareQuote = async (quote: QuoteType) => {
@@ -209,14 +288,15 @@ export default function FavoritesScreen() {
     onPress: () => void,
     icon: keyof typeof Ionicons.glyphMap,
     color: string,
-    bgColor: string
+    bgColor: string,
+    size: number = 20
   ) => (
     <TouchableOpacity
       onPress={onPress}
       className={`p-2 rounded-full ${bgColor} items-center justify-center`}
-      style={styles.actionButton}
+      style={[styles.actionButton, { width: size + 12, height: size + 12 }]}
     >
-      <Ionicons name={icon} size={20} color={color} />
+      <Ionicons name={icon} size={size} color={color} />
     </TouchableOpacity>
   );
 
@@ -304,20 +384,36 @@ export default function FavoritesScreen() {
                 {/* Image with overlay */}
                 <View className="relative aspect-square">
                   {shouldShowImage(quote.backgroundImage) ? (
-                    <Image
-                      source={{ 
-                        uri: getImageUrl(quote.backgroundImage)
-                      }}
-                      className="w-full h-full"
-                      contentFit="cover"
-                      transition={200}
-                      onError={() => {
-                        if (quote.backgroundImage) {
-                          console.log('Image failed to load, adding to failed set:', quote.backgroundImage);
-                          handleImageError(quote.backgroundImage);
-                        }
-                      }}
-                    />
+                    <View className="w-full h-full bg-gray-200 dark:bg-gray-700">
+                      <Image
+                        source={{ 
+                          uri: getImageUrl(quote.backgroundImage)
+                        }}
+                        className="w-full h-full"
+                        contentFit="cover"
+                        transition={200}
+                        onError={() => {
+                          if (quote.backgroundImage) {
+                            handleImageError(quote.backgroundImage);
+                          }
+                        }}
+                        onLoadStart={() => {
+                          if (quote.backgroundImage) {
+                            handleImageLoadStart(quote.backgroundImage);
+                          }
+                        }}
+                        onLoadEnd={() => {
+                          if (quote.backgroundImage) {
+                            handleImageLoadEnd(quote.backgroundImage);
+                          }
+                        }}
+                      />
+                      {quote.backgroundImage && loadingImages[getImageUrl(quote.backgroundImage)] && (
+                        <View className="absolute inset-0 bg-black/30 items-center justify-center">
+                          <ActivityIndicator color="#ffffff" />
+                        </View>
+                      )}
+                    </View>
                   ) : (
                     <View className="w-full h-full bg-gray-200 dark:bg-gray-700 items-center justify-center">
                       <Ionicons name="image-outline" size={48} color="#9ca3af" />
@@ -365,26 +461,32 @@ export default function FavoritesScreen() {
                     </Text>
                     <View className="flex-row space-x-1">
                       {renderActionButton(
+                        () => handleEditQuote(quote as QuoteType),
+                        "create-outline",
+                        colorScheme === "dark" ? "#93c5fd" : "#1e40af",
+                        colorScheme === "dark" ? "bg-blue-900/30" : "bg-blue-100/80",
+                        16
+                      )}
+                      {renderActionButton(
                         () => handleShareQuote(quote as QuoteType),
                         "share-outline",
                         colorScheme === "dark" ? "#e5e7eb" : "#4b5563",
-                        colorScheme === "dark"
-                          ? "bg-gray-700/50"
-                          : "bg-gray-100"
+                        colorScheme === "dark" ? "bg-gray-700/50" : "bg-gray-100/80",
+                        16
                       )}
                       {renderActionButton(
                         () => saveToGallery(quote as QuoteType),
                         "download-outline",
                         colorScheme === "dark" ? "#e5e7eb" : "#4b5563",
-                        colorScheme === "dark"
-                          ? "bg-gray-700/50"
-                          : "bg-gray-100"
+                        colorScheme === "dark" ? "bg-gray-700/50" : "bg-gray-100/80",
+                        16
                       )}
                       {renderActionButton(
                         () => handleDeleteQuote(quote.id),
                         "trash-outline",
                         "#ef4444",
-                        colorScheme === "dark" ? "bg-red-900/30" : "bg-red-100"
+                        colorScheme === "dark" ? "bg-red-900/30" : "bg-red-100/80",
+                        16
                       )}
                     </View>
                   </View>
