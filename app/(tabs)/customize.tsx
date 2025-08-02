@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
 } from "react-native";
 import Draggable from "react-native-draggable";
 import ViewShot from "react-native-view-shot";
@@ -17,14 +18,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useQuotes } from "@/context/QuotesContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
-
-const backgroundImages = [
-  "https://source.unsplash.com/random/800x600/?nature",
-  "https://source.unsplash.com/random/800x600/?beach",
-  "https://source.unsplash.com/random/800x600/?mountain",
-  "https://source.unsplash.com/random/800x600/?sunset",
-  "https://source.unsplash.com/random/800x600/?city",
-];
 
 export default function CustomizeScreen() {
   const { quotes, saveQuote, updateQuotePosition, saveToDevice } = useQuotes();
@@ -35,7 +28,7 @@ export default function CustomizeScreen() {
   // State for quote, author, image
   const [customText, setCustomText] = useState("");
   const [customAuthor, setCustomAuthor] = useState("");
-  const [selectedImage, setSelectedImage] = useState(backgroundImages[0]);
+  const [selectedImage, setSelectedImage] = useState("");
   const [isCustomQuote, setIsCustomQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(null);
 
@@ -44,11 +37,7 @@ export default function CustomizeScreen() {
     if (params && (params.text || params.author || params.backgroundImage)) {
       setCustomText(params.text ? String(params.text) : "");
       setCustomAuthor(params.author ? String(params.author) : "");
-      setSelectedImage(
-        params.backgroundImage
-          ? String(params.backgroundImage)
-          : backgroundImages[0]
-      );
+      setSelectedImage(params.backgroundImage ? String(params.backgroundImage) : "");
       setIsCustomQuote(true); // Open in edit mode
       setCurrentQuote(null); // Not using context quote
     } else if (quotes.length > 0) {
@@ -56,13 +45,13 @@ export default function CustomizeScreen() {
       const last = quotes[quotes.length - 1];
       setCustomText(last.text || "");
       setCustomAuthor(last.author || "");
-      setSelectedImage(last.backgroundImage || backgroundImages[0]);
+      setSelectedImage(last.backgroundImage || "");
       setIsCustomQuote(true);
       setCurrentQuote(last);
     } else {
       setCustomText("");
       setCustomAuthor("");
-      setSelectedImage(backgroundImages[0]);
+      setSelectedImage("");
       setIsCustomQuote(true);
       setCurrentQuote(null);
     }
@@ -141,126 +130,113 @@ export default function CustomizeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText>Customize Quote</ThemedText>
-        <TouchableOpacity style={styles.toggleButton} onPress={toggleQuoteMode}>
-          <ThemedText style={styles.toggleButtonText}>
-            {isCustomQuote ? "Use Generated Quote" : "Create Custom Quote"}
-          </ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
-
-      {isCustomQuote ? (
-        <ThemedView style={styles.inputContainer}>
-          <TextInput
-            style={[
-              styles.textInput,
-              { color: colorScheme === "dark" ? "#fff" : "#000" },
-            ]}
-            placeholder="Enter your quote"
-            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-            value={customText}
-            onChangeText={setCustomText}
-            multiline
-          />
-          <TextInput
-            style={[
-              styles.textInput,
-              { color: colorScheme === "dark" ? "#fff" : "#000" },
-            ]}
-            placeholder="Author (optional)"
-            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-            value={customAuthor}
-            onChangeText={setCustomAuthor}
-          />
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <ThemedView style={styles.header}>
+          <ThemedText>Customize Quote</ThemedText>
+          <TouchableOpacity style={styles.toggleButton} onPress={toggleQuoteMode}>
+            <ThemedText style={styles.toggleButtonText}>
+              {isCustomQuote ? "Use Generated Quote" : "Create Custom Quote"}
+            </ThemedText>
+          </TouchableOpacity>
         </ThemedView>
-      ) : currentQuote ? (
-        <ThemedView style={styles.quoteInfo}>
-          <ThemedText style={styles.quoteInfoText}>
-            Drag the quote text to position it on the image
-          </ThemedText>
-        </ThemedView>
-      ) : (
-        <ThemedView style={styles.noQuoteContainer}>
-          <ThemedText>
-            No quote selected. Generate a quote first or create a custom one.
-          </ThemedText>
-        </ThemedView>
-      )}
 
-      <ThemedView style={styles.imageContainer}>
-        <ViewShot ref={viewShotRef} style={styles.viewShot}>
-          <Image
-            source={{ uri: selectedImage }}
-            style={styles.backgroundImage}
-          />
-
-          {/* Always show editable draggable text for custom or loaded quote */}
-          <View style={styles.customTextContainer}>
-            <Draggable
-              x={50}
-              y={50}
-              onDragRelease={(event, gestureState) => {
-                handleDragRelease(gestureState.moveX, gestureState.moveY);
-              }}
-            >
-              <View style={styles.textContainer}>
-                <ThemedText style={styles.quoteText}>"{customText}"</ThemedText>
-                {customAuthor ? (
-                  <ThemedText style={styles.authorText}>
-                    - {customAuthor}
-                  </ThemedText>
-                ) : null}
-              </View>
-            </Draggable>
-          </View>
-        </ViewShot>
-      </ThemedView>
-
-      <ThemedView style={styles.backgroundSelector}>
-        <ThemedText>Select Background</ThemedText>
-        <View style={styles.backgroundOptions}>
-          {backgroundImages.map((image, index) => (
-            <TouchableOpacity
-              key={index}
+        {isCustomQuote ? (
+          <ThemedView style={styles.inputContainer}>
+            <TextInput
               style={[
-                styles.backgroundOption,
-                selectedImage === image && styles.selectedBackground,
+                styles.textInput,
+                { color: colorScheme === "dark" ? "#fff" : "#000" },
               ]}
-              onPress={() => setSelectedImage(image)}
-            >
+              placeholder="Enter your quote"
+              placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+              value={customText}
+              onChangeText={setCustomText}
+              multiline
+            />
+            <TextInput
+              style={[
+                styles.textInput,
+                { color: colorScheme === "dark" ? "#fff" : "#000" },
+              ]}
+              placeholder="Author (optional)"
+              placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+              value={customAuthor}
+              onChangeText={setCustomAuthor}
+            />
+          </ThemedView>
+        ) : currentQuote ? (
+          <ThemedView style={styles.quoteInfo}>
+            <ThemedText style={styles.quoteInfoText}>
+              Drag the quote text to position it on the image
+            </ThemedText>
+          </ThemedView>
+        ) : (
+          <ThemedView style={styles.noQuoteContainer}>
+            <ThemedText>
+              No quote selected. Generate a quote first or create a custom one.
+            </ThemedText>
+          </ThemedView>
+        )}
+
+        <ThemedView style={styles.imageContainer}>
+          <ViewShot ref={viewShotRef} style={styles.viewShot}>
+            {selectedImage ? (
               <Image
-                source={{ uri: image }}
-                style={styles.backgroundThumbnail}
+                source={{ uri: selectedImage }}
+                style={styles.backgroundImage}
               />
-            </TouchableOpacity>
-          ))}
+            ) : (
+              <View style={[styles.backgroundImage, { backgroundColor: 'transparent' }]} />
+            )}
+
+            {/* Always show editable draggable text for custom or loaded quote */}
+            <View style={styles.customTextContainer}>
+              <Draggable
+                x={50}
+                y={50}
+                onDragRelease={(event, gestureState) => {
+                  handleDragRelease(gestureState.moveX, gestureState.moveY);
+                }}
+              >
+                <View style={styles.textContainer}>
+                  <ThemedText style={styles.quoteText}>
+                    "{customText}"
+                  </ThemedText>
+                  {customAuthor ? (
+                    <ThemedText style={styles.authorText}>
+                      - {customAuthor}
+                    </ThemedText>
+                  ) : null}
+                </View>
+              </Draggable>
+            </View>
+          </ViewShot>
+        </ThemedView>
+
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
             <ThemedText style={styles.uploadButtonText}>+</ThemedText>
           </TouchableOpacity>
+          <ThemedText style={{ marginTop: 8 }}>Select Image from Gallery</ThemedText>
         </View>
-      </ThemedView>
 
-      <View className="flex-row justify-around mt-5">
-        <TouchableOpacity
-          className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
-          onPress={handleAddToFavorites}
-        >
-          <FontAwesome name="heart" size={16} color="white" />
-          <ThemedText className="text-white font-bold ml-2">
-            Add to Favorites
-          </ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
-          onPress={handleSaveToDevice}
-        >
-          <FontAwesome name="save" size={16} color="white" />
-          <ThemedText className="text-white font-bold ml-2">
-            Save to Device
-          </ThemedText>
-        </TouchableOpacity>
-      </View>
+        <View className="flex-row justify-around mt-5">
+            <TouchableOpacity
+              className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
+              onPress={handleAddToFavorites}
+            >
+              <FontAwesome name="heart" size={16} color="white" />
+              <ThemedText className="text-white font-bold ml-2">Add to Favorites</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
+              onPress={handleSaveToDevice}
+            >
+              <FontAwesome name="save" size={16} color="white" />
+              <ThemedText className="text-white font-bold ml-2">Save to Device</ThemedText>
+            </TouchableOpacity>
+          </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -346,30 +322,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "right",
     marginTop: 5,
-  },
-  backgroundSelector: {
-    marginBottom: 20,
-  },
-  backgroundOptions: {
-    flexDirection: "row",
-    marginTop: 10,
-    flexWrap: "wrap",
-  },
-  backgroundOption: {
-    width: 60,
-    height: 60,
-    marginRight: 10,
-    marginBottom: 10,
-    borderRadius: 5,
-    overflow: "hidden",
-  },
-  selectedBackground: {
-    borderWidth: 2,
-    borderColor: "#1D3D47",
-  },
-  backgroundThumbnail: {
-    width: "100%",
-    height: "100%",
   },
   uploadButton: {
     width: 60,
