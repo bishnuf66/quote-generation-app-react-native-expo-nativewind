@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Draggable from "react-native-draggable";
 import ViewShot from "react-native-view-shot";
+import { FontAwesome } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -50,7 +51,7 @@ export default function CustomizeScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
@@ -69,39 +70,26 @@ export default function CustomizeScreen() {
   };
 
   // Save the customized quote
-  const handleSaveQuote = async () => {
+  const handleSaveToDevice = async () => {
     try {
-      if (viewShotRef.current) {
-        const uri = await viewShotRef.current.capture();
-
-        // Save to device
+      const uri = await viewShotRef.current?.capture?.();
+      if (uri) {
         await saveToDevice(uri);
-
-        // Save to app
-        if (isCustomQuote) {
-          const newQuote = {
-            id: Date.now().toString(),
-            text: customText,
-            author: customAuthor,
-            backgroundImage: selectedImage,
-            textPosition: { x: 50, y: 50 },
-            createdAt: new Date(),
-          };
-          await saveQuote(newQuote);
-          setCurrentQuote(newQuote);
-        } else if (currentQuote) {
-          const updatedQuote = {
-            ...currentQuote,
-            backgroundImage: selectedImage,
-          };
-          await saveQuote(updatedQuote);
-        }
-
-        Alert.alert("Success", "Quote saved to your device and app");
+        Alert.alert("Success", "Quote saved to device!");
       }
     } catch (error) {
-      console.error("Error saving quote:", error);
-      Alert.alert("Error", "Failed to save quote");
+      Alert.alert("Error", "Failed to save quote to device.");
+    }
+  };
+
+  const handleAddToFavorites = async () => {
+    if (currentQuote) {
+      try {
+        await saveQuote(currentQuote);
+        Alert.alert("Success", "Quote added to favorites!");
+      } catch (error) {
+        Alert.alert("Error", "Failed to save quote to favorites.");
+      }
     }
   };
 
@@ -191,9 +179,14 @@ export default function CustomizeScreen() {
             <Draggable
               x={currentQuote.textPosition?.x || 50}
               y={currentQuote.textPosition?.y || 50}
-              onDragRelease={(event, gestureState) => {
-                handleDragRelease(gestureState.moveX, gestureState.moveY);
-              }}
+              onDragRelease={(_, gestureState) =>
+                handleDragRelease(
+                  gestureState.moveX,
+                  gestureState.moveY
+                )
+              }
+              onPressOut={() => {}}
+              onRelease={() => {}}
             >
               <View style={styles.textContainer}>
                 <ThemedText style={styles.quoteText}>
@@ -234,9 +227,22 @@ export default function CustomizeScreen() {
         </View>
       </ThemedView>
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSaveQuote}>
-        <ThemedText style={styles.saveButtonText}>Save Quote</ThemedText>
-      </TouchableOpacity>
+      <View className="flex-row justify-around mt-5">
+          <TouchableOpacity
+            className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
+            onPress={handleAddToFavorites}
+          >
+            <FontAwesome name="heart" size={16} color="white" />
+            <ThemedText className="text-white font-bold ml-2">Add to Favorites</ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
+            onPress={handleSaveToDevice}
+          >
+            <FontAwesome name="save" size={16} color="white" />
+            <ThemedText className="text-white font-bold ml-2">Save to Device</ThemedText>
+          </TouchableOpacity>
+        </View>
     </ThemedView>
   );
 }
@@ -359,15 +365,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-  saveButton: {
-    backgroundColor: "#1D3D47",
-    paddingVertical: 15,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
+
 });

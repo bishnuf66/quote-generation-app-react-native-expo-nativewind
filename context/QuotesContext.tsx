@@ -17,8 +17,8 @@ type QuoteType = {
 type QuotesContextType = {
   quotes: QuoteType[];
   savedQuotes: QuoteType[];
-  addQuote: (quote: Omit<QuoteType, 'id' | 'createdAt'>) => void;
-  saveQuote: (quote: QuoteType) => Promise<void>;
+  addQuote: (quote: Omit<QuoteType, 'id' | 'createdAt'>) => string;
+  saveQuote: (quote: Omit<QuoteType, 'id' | 'createdAt'>) => Promise<void>;
   deleteQuote: (id: string) => void;
   updateQuotePosition: (id: string, position: { x: number; y: number }) => void;
   saveToDevice: (uri: string) => Promise<void>;
@@ -42,25 +42,29 @@ export const QuotesProvider = ({ children }: QuotesProviderProps) => {
   const [quotes, setQuotes] = useState<QuoteType[]>([]);
   const [savedQuotes, setSavedQuotes] = useState<QuoteType[]>([]);
 
-  const addQuote = (quoteData: Omit<QuoteType, 'id' | 'createdAt'>) => {
+  const addQuote = (quoteData: Omit<QuoteType, 'id' | 'createdAt'>): string => {
     const newQuote: QuoteType = {
       ...quoteData,
       id: Date.now().toString(),
       createdAt: new Date(),
-      textPosition: quoteData.textPosition || { x: 50, y: 50 }, // Default position
+      textPosition: quoteData.textPosition || { x: 50, y: 50 },
     };
     setQuotes((prev) => [...prev, newQuote]);
-    return newQuote;
+    return newQuote.id;
   };
 
-  const saveQuote = async (quote: QuoteType) => {
+  const saveQuote = async (quote: Omit<QuoteType, 'id' | 'createdAt'>) => {
     setSavedQuotes((prev) => {
-      // Check if quote already exists
-      const exists = prev.some((q) => q.id === quote.id);
-      if (exists) {
-        return prev.map((q) => (q.id === quote.id ? quote : q));
+      const newQuote: QuoteType = {
+        ...quote,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+      };
+      // Avoid adding duplicates if the user spams the button
+      if (prev.some(q => q.text === newQuote.text && q.author === newQuote.author)) {
+        return prev;
       }
-      return [...prev, quote];
+      return [...prev, newQuote];
     });
   };
 
@@ -77,15 +81,17 @@ export const QuotesProvider = ({ children }: QuotesProviderProps) => {
   const saveToDevice = async (uri: string) => {
     try {
       // Request permissions
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        throw new Error('Media library permission not granted');
+      const permissions = await MediaLibrary.requestPermissionsAsync(true);
+      if (permissions.status !== 'granted') {
+        throw new Error('Media library write permission not granted');
+      }
+      if (permissions.accessPrivileges !== 'all') {
+        throw new Error('App does not have full access to the media library.');
       }
 
       // Save the image
       const asset = await MediaLibrary.createAssetAsync(uri);
       await MediaLibrary.createAlbumAsync('QuotesApp', asset, false);
-      return asset;
     } catch (error) {
       console.error('Error saving to device:', error);
       throw error;
