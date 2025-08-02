@@ -31,7 +31,6 @@ export default function CustomizeScreen() {
   const [isCustomQuote, setIsCustomQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(null);
   const [dragPos, setDragPos] = useState({ x: 50, y: 50 });
-  const [loadingQuote, setLoadingQuote] = useState(false);
   // Update state whenever params change (for navigation from saved or generate tab)
   useEffect(() => {
     if (params && (params.text || params.author || params.backgroundImage)) {
