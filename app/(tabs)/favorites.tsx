@@ -187,12 +187,12 @@ export default function FavoritesScreen() {
     icon: keyof typeof Ionicons.glyphMap,
     color: string,
     bgColor: string,
-    size: number = 16
+    size: number = 18
   ) => {
     return (
       <TouchableOpacity
         onPress={onPress}
-        className={`rounded-full ${bgColor} items-center justify-center p-2 mx-1`}
+        className={`flex-1 rounded-lg ${bgColor} items-center justify-center py-2 mx-0.5`}
       >
         <Ionicons name={icon} size={size} color={color} />
       </TouchableOpacity>
@@ -386,46 +386,32 @@ export default function FavoritesScreen() {
                 </View>
 
                 {/* Card Footer */}
-                <View className="p-1 bg-white/80 dark:bg-black/50 ">
-                  <View className="flex-row justify-between items-center flex ">
-                    <View className="flex-row j">
-                      {renderActionButton(
-                        () => handleEditQuote(quote as QuoteType),
-                        "create-outline",
-                        colorScheme === "dark" ? "#93c5fd" : "#1e40af",
-                        colorScheme === "dark"
-                          ? "bg-blue-900/50"
-                          : "bg-blue-100/90",
-                        16
-                      )}
-                      {renderActionButton(
-                        () => handleShareQuote(quote as QuoteType),
-                        "share-outline",
-                        colorScheme === "dark" ? "#e5e7eb" : "#4b5563",
-                        colorScheme === "dark"
-                          ? "bg-gray-700/60"
-                          : "bg-gray-200/90",
-                        16
-                      )}
-                      {renderActionButton(
-                        () => saveToGallery(quote as QuoteType),
-                        "download-outline",
-                        colorScheme === "dark" ? "#e5e7eb" : "#4b5563",
-                        colorScheme === "dark"
-                          ? "bg-gray-700/60"
-                          : "bg-gray-200/90",
-                        16
-                      )}
-                      {renderActionButton(
-                        () => handleDeleteQuote(quote.id),
-                        "trash-outline",
-                        "#ef4444",
-                        colorScheme === "dark"
-                          ? "bg-red-900/50"
-                          : "bg-red-100/90",
-                        16
-                      )}
-                    </View>
+                <View className="p-2 bg-white/80 dark:bg-black/50">
+                  <View className="flex-row justify-between items-center w-full">
+                    {renderActionButton(
+                      () => handleEditQuote(quote as QuoteType),
+                      "create-outline",
+                      colorScheme === "dark" ? "#ffffff" : "#000000",
+                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
+                    )}
+                    {renderActionButton(
+                      () => handleShareQuote(quote as QuoteType),
+                      "share-outline",
+                      colorScheme === "dark" ? "#ffffff" : "#000000",
+                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
+                    )}
+                    {renderActionButton(
+                      () => saveToGallery(quote as QuoteType),
+                      "download-outline",
+                      colorScheme === "dark" ? "#ffffff" : "#000000",
+                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
+                    )}
+                    {renderActionButton(
+                      () => handleDeleteQuote(quote.id),
+                      "trash-outline",
+                      "#ef4444",
+                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
+                    )}
                   </View>
                 </View>
               </View>
