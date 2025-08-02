@@ -38,29 +38,33 @@ export default function CustomizeScreen() {
   const [customText, setCustomText] = useState("");
   const [customAuthor, setCustomAuthor] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
-  const [isCustomQuote, setIsCustomQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState<null | QuoteType>(null);
   const [textDimensions, setTextDimensions] = useState({
     width: 250,
     height: 80,
   });
   const [isDragging, setIsDragging] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Animated values for position and scale
   const pan = useRef(new Animated.ValueXY({ x: 50, y: 50 })).current;
   const scale = useRef(new Animated.Value(1)).current;
 
-  // Update state whenever params change
+  // Initialize state only once when params change
   useEffect(() => {
+    // Prevent re-initialization if already set up
+    if (isInitialized) return;
+
     console.log("Customize screen params:", params);
+
+    // Handle navigation with specific parameters (from edit or customize buttons)
     if (params && (params.text || params.author || params.backgroundImage)) {
-      console.log("Setting up from params - Custom mode");
+      console.log("Setting up from params - Edit mode");
       setCustomText(params.text ? String(params.text) : "");
       setCustomAuthor(params.author ? String(params.author) : "");
       setSelectedImage(
         params.backgroundImage ? String(params.backgroundImage) : ""
       );
-      setIsCustomQuote(true);
       setCurrentQuote(null);
 
       // Set initial position from params or center
@@ -68,31 +72,42 @@ export default function CustomizeScreen() {
       const initialX = textPos?.x || IMAGE_WIDTH / 2 - 125;
       const initialY = textPos?.y || IMAGE_HEIGHT / 2 - 40;
       pan.setValue({ x: initialX, y: initialY });
-    } else if (quotes.length > 0) {
-      console.log("Setting up from last quote");
-      const last = quotes[quotes.length - 1];
-      setCustomText(last.text || "");
-      setCustomAuthor(last.author || "");
-      setSelectedImage(last.backgroundImage || "");
-      setIsCustomQuote(true);
-      setCurrentQuote(last);
+      setIsInitialized(true);
+    }
+    // Handle navigation with quoteId (from generate screen)
+    else if (params.quoteId && quotes.length > 0) {
+      console.log("Setting up from quoteId:", params.quoteId);
+      const foundQuote = quotes.find(q => q.id === params.quoteId);
+      if (foundQuote) {
+        setCustomText(foundQuote.text || "");
+        setCustomAuthor(foundQuote.author || "");
+        setSelectedImage(foundQuote.backgroundImage || "");
+        setCurrentQuote(foundQuote);
 
-      const savedPos = last.textPosition || {
-        x: IMAGE_WIDTH / 2 - 125,
-        y: IMAGE_HEIGHT / 2 - 40,
-      };
-      pan.setValue({ x: savedPos.x, y: savedPos.y });
-    } else {
+        const savedPos = foundQuote.textPosition || {
+          x: IMAGE_WIDTH / 2 - 125,
+          y: IMAGE_HEIGHT / 2 - 40,
+        };
+        pan.setValue({ x: savedPos.x, y: savedPos.y });
+        setIsInitialized(true);
+      }
+    }
+    // Handle fresh start - only if no params at all
+    else if (!params.text && !params.author && !params.backgroundImage && !params.quoteId) {
       console.log("Setting up empty state");
       setCustomText("");
       setCustomAuthor("");
       setSelectedImage("");
-      setIsCustomQuote(true);
       setCurrentQuote(null);
       pan.setValue({ x: IMAGE_WIDTH / 2 - 125, y: IMAGE_HEIGHT / 2 - 40 });
+      setIsInitialized(true);
     }
-    console.log("Current state - isCustomQuote:", isCustomQuote, "customText:", customText);
-  }, [params.text, params.author, params.backgroundImage, quotes.length, params, quotes, isCustomQuote, customText, pan]);
+  }, [params.text, params.author, params.backgroundImage, params.quoteId, isInitialized, params, quotes, pan]);
+
+  // Reset initialization flag when navigating to a new quote
+  useEffect(() => {
+    setIsInitialized(false);
+  }, [params.text, params.author, params.backgroundImage, params.quoteId]);
 
   // Create PanResponder for drag functionality
   const panResponder = useRef(
@@ -113,7 +128,7 @@ export default function CustomizeScreen() {
           y: panY._value || 0,
         });
       },
-      onPanResponderMove: (evt, gestureState) => {
+      onPanResponderMove: (_, gestureState) => {
         // Calculate new position
         const newX = gestureState.dx;
         const newY = gestureState.dy;
@@ -187,14 +202,14 @@ export default function CustomizeScreen() {
   // Save the customized quote
   const handleSaveToDevice = async () => {
     try {
-      if (viewShotRef.current) {
+      if (viewShotRef.current && viewShotRef.current.capture) {
         const uri = await viewShotRef.current.capture();
         if (uri) {
           await saveToDevice(uri);
           Alert.alert("Success", "Quote saved to device!");
         }
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to save quote to device.");
     }
   };
@@ -212,7 +227,7 @@ export default function CustomizeScreen() {
       try {
         await saveQuote(newQuote);
         Alert.alert("Success", "Quote added to favorites!");
-      } catch (error) {
+      } catch {
         Alert.alert("Error", "Failed to save quote to favorites.");
       }
     } else {
@@ -281,25 +296,9 @@ export default function CustomizeScreen() {
           />
         </View>
 
-        {/* Mode Toggle and Instructions */}
+        {/* Instructions */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
           <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-            <AnimatedButton
-              title={isCustomQuote ? "Custom Mode" : "Edit Mode"}
-              onPress={() => setIsCustomQuote(!isCustomQuote)}
-              gradientColors={isCustomQuote ? ["#667eea", "#764ba2"] : ["#f093fb", "#f5576c"]}
-              size="small"
-              icon={
-                <AnimatedIcon
-                  name={isCustomQuote ? "edit" : "plus"}
-                  size={14}
-                  color="white"
-                  library="FontAwesome"
-                />
-              }
-              style={{ flex: 1, marginRight: 8 }}
-            />
-
             <AnimatedButton
               title="Clear All"
               onPress={() => {
@@ -308,6 +307,7 @@ export default function CustomizeScreen() {
                 setSelectedImage("");
                 setCurrentQuote(null);
                 resetPosition();
+                setIsInitialized(false);
               }}
               gradientColors={["#ff7e5f", "#feb47b"]}
               size="small"
@@ -320,7 +320,7 @@ export default function CustomizeScreen() {
                   library="FontAwesome"
                 />
               }
-              style={{ flex: 1, marginLeft: 8 }}
+              style={{ flex: 1 }}
             />
           </View>
 
@@ -337,13 +337,12 @@ export default function CustomizeScreen() {
               />
               <View style={{ marginLeft: 12, flex: 1 }}>
                 <ThemedText style={{ fontWeight: '600', marginBottom: 4 }}>
-                  {isCustomQuote ? "Custom Mode:" : "Edit Mode:"}
+                  Edit Mode:
                 </ThemedText>
                 <ThemedText style={{ fontSize: 14, opacity: 0.8, lineHeight: 20 }}>
-                  {isCustomQuote
-                    ? "1. Enter your quote and author\n2. Select a background image\n3. Drag the quote to position it perfectly"
-                    : "1. Modify the existing quote\n2. Change the background image\n3. Reposition the text as needed"
-                  }
+                  1. Modify the quote and author text
+                  {"\n"}2. Change the background image
+                  {"\n"}3. Drag the quote to position it perfectly
                 </ThemedText>
               </View>
             </View>
@@ -364,7 +363,7 @@ export default function CustomizeScreen() {
                 library="FontAwesome"
               />
               <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
-                {isCustomQuote ? "Your Quote" : "Edit Quote"}
+                Quote Text
               </ThemedText>
             </View>
             <TextInput
@@ -381,7 +380,7 @@ export default function CustomizeScreen() {
                   padding: 12,
                 }
               ]}
-              placeholder={isCustomQuote ? "Enter your inspirational quote..." : "Edit the quote text..."}
+              placeholder="Enter or edit your quote text..."
               placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
               value={customText}
               onChangeText={setCustomText}
