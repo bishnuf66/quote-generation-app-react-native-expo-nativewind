@@ -1,26 +1,22 @@
+import { useQuotes } from "@/context/QuotesContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
-import { ActivityIndicator } from "react-native";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   ScrollView,
   Share,
-  StyleSheet,
   Text,
   TouchableOpacity,
   useColorScheme,
   View,
-  ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
-
-import { useQuotes } from "@/context/QuotesContext";
-
 const { width } = Dimensions.get("window");
 const CARD_GAP = 16;
 const CARD_WIDTH = (width - CARD_GAP * 3) / 2;
@@ -48,9 +44,9 @@ export default function FavoritesScreen() {
   }>({});
 
   const handleImageError = (url: string) => {
-    console.log('Image error for URL:', url);
-    const fullUrl = getImageUrl(url);
-    setFailedImageUrls(prev => {
+    console.log("Image error for URL:", url);
+    const fullUrl = url;
+    setFailedImageUrls((prev) => {
       const newSet = new Set(prev);
       newSet.add(fullUrl);
       return newSet;
@@ -58,149 +54,31 @@ export default function FavoritesScreen() {
   };
 
   const handleImageLoadStart = (url: string) => {
-    console.log('Image load started:', url);
-    const fullUrl = getImageUrl(url);
-    setLoadingImages(prev => ({
+    console.log("Image load started:", url);
+    const fullUrl = url;
+    setLoadingImages((prev) => ({
       ...prev,
-      [fullUrl]: true
+      [fullUrl]: true,
     }));
   };
 
   const handleImageLoadEnd = (url: string) => {
-    console.log('Image load ended:', url);
-    const fullUrl = getImageUrl(url);
-    setLoadingImages(prev => ({
+    console.log("Image load ended:", url);
+    const fullUrl = url;
+    setLoadingImages((prev) => ({
       ...prev,
-      [fullUrl]: false
+      [fullUrl]: false,
     }));
   };
 
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const viewRefs = useRef<{ [key: string]: View | null }>({});
-
   // Colors based on theme
   const backgroundColor = colorScheme === "dark" ? "bg-black" : "bg-gray-50";
   const textColor = colorScheme === "dark" ? "text-white" : "text-gray-900";
-  const cardBg = colorScheme === "dark" ? "bg-gray-800" : "bg-white";
   const secondaryText =
     colorScheme === "dark" ? "text-gray-300" : "text-gray-600";
-  const dividerColor =
-    colorScheme === "dark" ? "border-gray-700" : "border-gray-200";
-  const actionButtonBg =
-    colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80";
-  const shadowColor =
-    colorScheme === "dark" ? "shadow-gray-900" : "shadow-gray-400";
-
-  const styles = StyleSheet.create({
-    actionButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor:
-        colorScheme === "dark" ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)",
-      marginHorizontal: 2,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.2,
-      shadowRadius: 1.5,
-      elevation: 2,
-    } as ViewStyle,
-    actionContainer: {
-      position: "absolute",
-      bottom: 12,
-      right: 12,
-      left: 12,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: 8,
-      borderRadius: 20,
-      backgroundColor:
-        colorScheme === "dark" ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.8)",
-      backdropFilter: "blur(10px)",
-    } as ViewStyle,
-    cardContainer: {
-      width: CARD_WIDTH,
-      marginBottom: CARD_GAP,
-      borderRadius: 16,
-      overflow: "hidden",
-      shadowColor: colorScheme === "dark" ? "#000" : "#888",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 5,
-    } as ViewStyle,
-    imageContainer: {
-      width: "100%",
-      aspectRatio: 1,
-      position: "relative",
-    } as ViewStyle,
-    modernCard: {
-      backgroundColor: cardBg,
-      borderRadius: 16,
-      padding: 16,
-      shadowColor: shadowColor,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 5,
-    } as ViewStyle,
-  });
-
-  // Helper function to get properly formatted image URL
-  const getImageUrl = (url: string | undefined): string => {
-    if (!url) {
-      console.log("getImageUrl: No URL provided");
-      return "";
-    }
-
-    console.log("getImageUrl - Original URL:", url);
-
-    // If it's already a valid URL, return as is
-    if (
-      url.startsWith("http://") ||
-      url.startsWith("https://") ||
-      url.startsWith("file://")
-    ) {
-      console.log("getImageUrl: Already a valid URL");
-      return url;
-    }
-
-    // If it starts with //, add https:
-    if (url.startsWith("//")) {
-      const result = `https:${url}`;
-      console.log("getImageUrl: Added https: to URL", result);
-      return result;
-    }
-
-    // If it's a data URL, return as is
-    if (url.startsWith("data:")) {
-      console.log("getImageUrl: Data URL detected");
-      return url;
-    }
-
-    // If it's a relative URL, try to make it absolute
-    if (url.startsWith("/")) {
-      const result = `https:${url}`;
-      console.log("getImageUrl: Converted relative URL to absolute", result);
-      return result;
-    }
-
-    // If it's a Pexels URL without protocol
-    if (url.includes("images.pexels.com")) {
-      const result = `https:${url}`;
-      console.log("getImageUrl: Fixed Pexels URL", result);
-      return result;
-    }
-
-    // Otherwise, assume it's a full URL without protocol
-    const result = `https://${url}`;
-    console.log("getImageUrl: Added https:// to URL", result);
-    return result;
-  };
 
   const handleDeleteQuote = (id: string) => {
     console.log("Attempting to delete quote with ID:", id);
@@ -217,7 +95,7 @@ export default function FavoritesScreen() {
           // Also remove from failed images set if it exists
           const quote = savedQuotes.find((q) => q.id === id);
           if (quote?.backgroundImage) {
-            const fullUrl = getImageUrl(quote.backgroundImage);
+            const fullUrl = quote.backgroundImage;
             console.log("Removing image from failed set:", fullUrl);
             setFailedImageUrls((prev) => {
               const newSet = new Set(prev);
@@ -309,14 +187,12 @@ export default function FavoritesScreen() {
     icon: keyof typeof Ionicons.glyphMap,
     color: string,
     bgColor: string,
-    size: number = 20
+    size: number = 16
   ) => {
-    console.log(`Rendering action button: ${icon}`);
     return (
       <TouchableOpacity
         onPress={onPress}
-        className={`rounded-full ${bgColor} items-center justify-center`}
-        style={[styles.actionButton]}
+        className={`rounded-full ${bgColor} items-center justify-center p-2 mx-1`}
       >
         <Ionicons name={icon} size={size} color={color} />
       </TouchableOpacity>
@@ -409,12 +285,12 @@ export default function FavoritesScreen() {
                   {quote.backgroundImage ? (
                     <>
                       <Image
-                        source={{ 
-                          uri: getImageUrl(quote.backgroundImage)
+                        source={{
+                          uri: quote.backgroundImage,
                         }}
                         className="w-full h-full"
                         style={{
-                          position: 'absolute',
+                          position: "absolute",
                           top: 0,
                           left: 0,
                           right: 0,
@@ -423,7 +299,10 @@ export default function FavoritesScreen() {
                         contentFit="cover"
                         transition={200}
                         onError={() => {
-                          console.log('Error loading image:', quote.backgroundImage);
+                          console.log(
+                            "Error loading image:",
+                            quote.backgroundImage
+                          );
                           if (quote.backgroundImage) {
                             handleImageError(quote.backgroundImage);
                           }
@@ -439,14 +318,18 @@ export default function FavoritesScreen() {
                           }
                         }}
                       />
-                      {loadingImages[getImageUrl(quote.backgroundImage)] && (
+                      {loadingImages[quote.backgroundImage] && (
                         <View className="absolute inset-0 bg-black/30 items-center justify-center">
                           <ActivityIndicator color="#ffffff" size="large" />
                         </View>
                       )}
-                      {failedImageUrls.has(getImageUrl(quote.backgroundImage)) && (
+                      {failedImageUrls.has(quote.backgroundImage) && (
                         <View className="absolute inset-0 bg-gray-200 dark:bg-gray-700 items-center justify-center">
-                          <Ionicons name="image-outline" size={48} color="#9ca3af" />
+                          <Ionicons
+                            name="image-outline"
+                            size={48}
+                            color="#9ca3af"
+                          />
                           <Text className="text-gray-500 mt-2 text-center px-2">
                             Couldn't load image
                           </Text>
@@ -455,14 +338,18 @@ export default function FavoritesScreen() {
                     </>
                   ) : (
                     <View className="w-full h-full items-center justify-center">
-                      <Ionicons name="image-outline" size={48} color="#9ca3af" />
+                      <Ionicons
+                        name="image-outline"
+                        size={48}
+                        color="#9ca3af"
+                      />
                       <Text className="text-gray-500 mt-2 text-center px-2">
                         No image available
                       </Text>
                     </View>
                   )}
 
-                  <View className="absolute inset-0 bg-black/30 p-4 justify-end">
+                  <View className=" bg-black/30 p-4 justify-end">
                     <Text
                       className="text-white text-base font-medium mb-2"
                       numberOfLines={3}
@@ -486,7 +373,9 @@ export default function FavoritesScreen() {
                         — {quote.author}
                       </Text>
                     )}
-                    <Text className={`text-xs ${secondaryText}`}>
+                    <Text
+                      className={`text-xs text-right text-sky-50 ${secondaryText}`}
+                    >
                       {new Date(quote.createdAt).toLocaleDateString(undefined, {
                         year: "numeric",
                         month: "short",
@@ -497,9 +386,9 @@ export default function FavoritesScreen() {
                 </View>
 
                 {/* Card Footer */}
-                <View className="p-1 bg-white/80 dark:bg-black/50">
-                  <View className="flex-row justify-between items-center">
-                    <View className="flex-row space-x-2">
+                <View className="p-1 bg-white/80 dark:bg-black/50 ">
+                  <View className="flex-row justify-between items-center flex ">
+                    <View className="flex-row j">
                       {renderActionButton(
                         () => handleEditQuote(quote as QuoteType),
                         "create-outline",
