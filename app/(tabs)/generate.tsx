@@ -3,17 +3,20 @@ import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
+  Animated,
   Image,
   NativeSyntheticEvent,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
+import { SimpleDots, SimpleLoader } from "@/components/ui/SimpleLoader";
 import { useQuotes } from "@/context/QuotesContext";
 
 type QuoteCategory =
@@ -64,12 +67,17 @@ export default function GenerateScreen() {
     "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
   );
   const [loading, setLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuoteCategory, setSelectedQuoteCategory] =
     useState<QuoteCategory>("inspirational");
   const [selectedImageCategory, setSelectedImageCategory] =
     useState<string>("nature");
   const viewShotRef = useRef<ViewShot>(null);
+
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   const quoteCategories: QuoteCategory[] = [
     "inspirational",
@@ -120,6 +128,7 @@ export default function GenerateScreen() {
   const fetchRandomImage = async (
     categoryId: string = selectedImageCategory
   ) => {
+    setImageLoading(true);
     try {
       let query = "nature";
       const category = imageCategories.find((cat) => cat.id === categoryId);
@@ -174,6 +183,8 @@ export default function GenerateScreen() {
       setBackgroundUrl(
         "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
       );
+    } finally {
+      setImageLoading(false);
     }
   };
 
@@ -216,6 +227,22 @@ export default function GenerateScreen() {
     };
     init();
   }, [selectedQuoteCategory, selectedImageCategory]);
+
+  useEffect(() => {
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleQuoteCategorySelect = (category: QuoteCategory) => {
     setSelectedQuoteCategory(category);
@@ -352,11 +379,22 @@ export default function GenerateScreen() {
           zIndex: 2,
         }}
       >
-        <View className="items-center pt-8 pb-4">
+        <Animated.View
+          className="items-center pt-8 pb-4"
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
           <Text className="text-3xl font-bold text-white drop-shadow-lg mb-1">
             Generate Quotes
           </Text>
-        </View>
+          {loading && (
+            <View className="mt-2">
+              <SimpleDots color="#67e8f9" />
+            </View>
+          )}
+        </Animated.View>
         <View className="px-5 pb-2">
           <View className="mb-4">
             <Text className="text-white font-medium mb-2 ml-1">
@@ -482,33 +520,46 @@ export default function GenerateScreen() {
                 }}
               >
                 {loading ? (
-                  <ActivityIndicator size="large" color="#A1CEDC" />
+                  <View style={{ alignItems: "center" }}>
+                    <SimpleLoader size={50} color="#67e8f9" />
+                    <Text style={{ color: "white", marginTop: 12, fontSize: 14 }}>
+                      Generating quote...
+                    </Text>
+                  </View>
                 ) : error ? (
                   <View style={{ alignItems: "center", padding: 16 }}>
+                    <AnimatedIcon
+                      name="exclamation-triangle"
+                      size={32}
+                      color="#f87171"
+                      animationType="shake"
+                      library="FontAwesome"
+                      style={{ marginBottom: 12 }}
+                    />
                     <Text
                       style={{
                         color: "#f87171",
                         textAlign: "center",
-                        marginBottom: 8,
+                        marginBottom: 16,
+                        fontSize: 16,
                       }}
                     >
                       {error}
                     </Text>
-                    <TouchableOpacity
-                      style={{
-                        backgroundColor: "#0e7490",
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 8,
-                      }}
-                      onPress={() =>
-                        generateNewQuoteAndImage(selectedQuoteCategory)
+                    <AnimatedButton
+                      title="Try Again"
+                      onPress={() => generateNewQuoteAndImage(selectedQuoteCategory)}
+                      gradientColors={["#0e7490", "#0891b2"]}
+                      size="small"
+                      icon={
+                        <AnimatedIcon
+                          name="refresh"
+                          size={16}
+                          color="white"
+                          library="FontAwesome"
+                        />
                       }
-                    >
-                      <Text style={{ color: "white", fontWeight: "bold" }}>
-                        Try Again
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   </View>
                 ) : quote ? (
                   <View
@@ -554,47 +605,105 @@ export default function GenerateScreen() {
           </ViewShot>
         </View>
 
-        <View className="mt-4 px-5">
+        <Animated.View
+          className="mt-4 px-5"
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
+        >
           <View className="flex-row justify-around flex-wrap">
-            <TouchableOpacity
-              className="bg-white/10 px-4 py-3 rounded-lg border border-cyan-700 mb-3 flex-row items-center"
+            <AnimatedButton
+              title="New Quote"
               onPress={() => fetchQuoteFromServer(selectedQuoteCategory)}
-            >
-              <FontAwesome name="quote-left" size={16} color="#67e8f9" />
-              <Text className="text-cyan-300 font-bold ml-2">New Quote</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-white/10 px-4 py-3 rounded-lg border border-cyan-700 mb-3 flex-row items-center"
+              gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]}
+              variant="outline"
+              size="small"
+              disabled={loading}
+              icon={
+                <AnimatedIcon
+                  name="quote-left"
+                  size={16}
+                  color="#67e8f9"
+                  library="FontAwesome"
+                />
+              }
+              style={{ marginBottom: 12, marginHorizontal: 4, borderColor: "#0891b2" }}
+            />
+
+            <AnimatedButton
+              title={imageLoading ? "Loading..." : "New Image"}
               onPress={() => fetchRandomImage(selectedImageCategory)}
-            >
-              <FontAwesome name="image" size={16} color="#67e8f9" />
-              <Text className="text-cyan-300 font-bold ml-2">New Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-green-700 px-4 py-3 rounded-lg mb-3 flex-row items-center"
+              gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]}
+              variant="outline"
+              size="small"
+              disabled={imageLoading}
+              icon={
+                imageLoading ? (
+                  <SimpleLoader size={16} color="#67e8f9" />
+                ) : (
+                  <AnimatedIcon
+                    name="image"
+                    size={16}
+                    color="#67e8f9"
+                    library="FontAwesome"
+                  />
+                )
+              }
+              style={{ marginBottom: 12, marginHorizontal: 4, borderColor: "#0891b2" }}
+            />
+
+            <AnimatedButton
+              title="Save to Favorites"
               onPress={handleSaveToFavorites}
-            >
-              <FontAwesome name="heart" size={16} color="white" />
-              <Text className="text-white font-bold ml-2">
-                Save to Favorites
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-teal-600 px-4 py-3 rounded-lg mb-3 flex-row items-center"
+              gradientColors={["#059669", "#10b981"]}
+              size="small"
+              icon={
+                <AnimatedIcon
+                  name="heart"
+                  size={16}
+                  color="white"
+                  animationType="pulse"
+                  library="FontAwesome"
+                />
+              }
+              style={{ marginBottom: 12, marginHorizontal: 4 }}
+            />
+
+            <AnimatedButton
+              title="Save to Device"
               onPress={handleSaveToDevice}
-            >
-              <FontAwesome name="save" size={16} color="white" />
-              <Text className="text-white font-bold ml-2">Save to Device</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-cyan-700 px-4 py-3 rounded-lg mb-3 flex-row items-center"
+              gradientColors={["#0891b2", "#06b6d4"]}
+              size="small"
+              icon={
+                <AnimatedIcon
+                  name="save"
+                  size={16}
+                  color="white"
+                  library="FontAwesome"
+                />
+              }
+              style={{ marginBottom: 12, marginHorizontal: 4 }}
+            />
+
+            <AnimatedButton
+              title="Customize"
               onPress={handleCustomize}
-            >
-              <FontAwesome name="paint-brush" size={16} color="white" />
-              <Text className="text-white font-bold ml-2">Customize</Text>
-            </TouchableOpacity>
+              gradientColors={["#7c3aed", "#a855f7"]}
+              size="small"
+              icon={
+                <AnimatedIcon
+                  name="paint-brush"
+                  size={16}
+                  color="white"
+                  animationType="shake"
+                  library="FontAwesome"
+                />
+              }
+              style={{ marginBottom: 12, marginHorizontal: 4 }}
+            />
           </View>
-        </View>
+        </Animated.View>
       </ScrollView>
     </View>
   );

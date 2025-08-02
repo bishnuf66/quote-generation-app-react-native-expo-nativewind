@@ -1,11 +1,17 @@
+import { ThemedText } from "@/components/ThemedText";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
+import { GradientCard } from "@/components/ui/GradientCard";
 import { useQuotes } from "@/context/QuotesContext";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Dimensions,
   Image as RNImage,
   ScrollView,
@@ -43,6 +49,26 @@ export default function FavoritesScreen() {
   const [loadingImages, setLoadingImages] = useState<{
     [key: string]: boolean;
   }>({});
+
+  // Animation refs
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const handleImageError = (url: string) => {
     console.log("Image error for URL:", url);
@@ -289,32 +315,61 @@ export default function FavoritesScreen() {
 
   if (savedQuotes.length === 0) {
     return (
-      <View
-        className={`flex-1 ${backgroundColor} justify-center items-center p-6`}
+      <LinearGradient
+        colors={
+          colorScheme === "dark"
+            ? ["#0f0f23", "#1a1a2e", "#16213e"]
+            : ["#f8fafc", "#e2e8f0", "#cbd5e1"]
+        }
+        style={{ flex: 1 }}
       >
-        <View className="bg-gray-200 dark:bg-gray-700 p-6 rounded-full mb-6">
-          <Ionicons
-            name="heart-outline"
-            size={64}
-            color={colorScheme === "dark" ? "#9ca3af" : "#6b7280"}
-          />
+        <View className="flex-1 justify-center items-center p-6">
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+              alignItems: "center",
+            }}
+          >
+            <GradientCard
+              gradientColors={["#667eea", "#764ba2"]}
+              style={{ padding: 24, borderRadius: 50, marginBottom: 24 }}
+            >
+              <AnimatedIcon
+                name="heart-outline"
+                size={64}
+                color="white"
+                animationType="pulse"
+                library="Ionicons"
+              />
+            </GradientCard>
+
+            <ThemedText type="display" className="text-center mb-2">
+              No Favorites Yet
+            </ThemedText>
+
+            <ThemedText className={`text-center mt-2 ${secondaryText} mb-8 max-w-xs leading-6`}>
+              Save your favorite quotes and they'll appear here as beautiful cards
+            </ThemedText>
+
+            <AnimatedButton
+              title="Generate a Quote"
+              onPress={() => router.push("/generate")}
+              gradientColors={["#667eea", "#764ba2"]}
+              size="large"
+              icon={
+                <AnimatedIcon
+                  name="sparkles"
+                  size={20}
+                  color="white"
+                  animationType="bounce"
+                  library="Ionicons"
+                />
+              }
+            />
+          </Animated.View>
         </View>
-        <Text className={`text-2xl font-bold ${textColor} text-center`}>
-          No Favorites Yet
-        </Text>
-        <Text className={`text-center mt-2 ${secondaryText} mb-8 max-w-xs`}>
-          Save your favorite quotes and they&apos;ll appear here
-        </Text>
-        <TouchableOpacity
-          className="bg-cyan-600 px-8 py-4 rounded-full flex-row items-center shadow-lg shadow-cyan-500/20"
-          onPress={() => router.push("/generate")}
-        >
-          <Ionicons name="sparkles" size={20} color="white" />
-          <Text className="text-white font-semibold ml-2 text-lg">
-            Generate a Quote
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 

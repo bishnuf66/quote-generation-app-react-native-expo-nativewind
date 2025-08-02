@@ -6,11 +6,13 @@ import {
   Animated,
   Dimensions,
   ScrollView,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
+import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
+import { GradientCard } from "@/components/ui/GradientCard";
+import { SimpleDots } from "@/components/ui/SimpleLoader";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 const { width } = Dimensions.get("window");
@@ -72,7 +74,7 @@ export default function HomeScreen() {
         useNativeDriver: true,
       })
     ).start();
-  }, []);
+  }, [fadeAnim, rotateAnim, scaleAnim1, scaleAnim2, scaleAnim3, slideAnim]);
 
   const navigateTo = (screen: string) => {
     router.push(screen);
@@ -122,51 +124,44 @@ export default function HomeScreen() {
           transform: [{ scale: Animated.multiply(scaleAnim, pressAnim) }],
         }}
       >
-        <TouchableOpacity
+        <GradientCard
+          gradientColors={gradientColors}
           onPress={onPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          activeOpacity={0.9}
+          style={{ padding: 24, margin: 8, borderRadius: 20 }}
         >
-          <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="rounded-2xl p-6 mb-4 mx-2"
-            style={{
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.15,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
-          >
-            <View className="flex-row items-center mb-3">
-              <View className="bg-white/20 rounded-full p-3 mr-4">
-                <FontAwesome name={icon as any} size={24} color="white" />
-              </View>
-              <View className="flex-1">
-                <ThemedText className="text-xl font-bold text-white mb-1">
-                  {title}
-                </ThemedText>
-                <ThemedText className="text-white/90 text-sm leading-5">
-                  {description}
-                </ThemedText>
-              </View>
-            </View>
-            <View className="bg-white/10 h-px w-full mb-3" />
-            <View className="flex-row justify-between items-center">
-              <ThemedText className="text-white/80 text-xs font-medium">
-                Tap to explore
-              </ThemedText>
-              <FontAwesome
-                name="arrow-right"
-                size={16}
-                color="rgba(255,255,255,0.8)"
+          <View className="flex-row items-center mb-4">
+            <View className="bg-white/20 rounded-full p-3 mr-4">
+              <AnimatedIcon
+                name={icon}
+                size={24}
+                color="white"
+                animationType="bounce"
+                library="FontAwesome"
               />
             </View>
-          </LinearGradient>
-        </TouchableOpacity>
+            <View className="flex-1">
+              <ThemedText className="text-xl font-bold text-white mb-1">
+                {title}
+              </ThemedText>
+              <ThemedText className="text-white/90 text-sm leading-5">
+                {description}
+              </ThemedText>
+            </View>
+          </View>
+          <View className="bg-white/10 h-px w-full mb-3" />
+          <View className="flex-row justify-between items-center">
+            <ThemedText className="text-white/80 text-xs font-medium">
+              Tap to explore
+            </ThemedText>
+            <AnimatedIcon
+              name="arrow-right"
+              size={16}
+              color="rgba(255,255,255,0.8)"
+              animationType="bounce"
+              library="FontAwesome"
+            />
+          </View>
+        </GradientCard>
       </Animated.View>
     );
   };
@@ -204,21 +199,40 @@ export default function HomeScreen() {
         }}
       >
         <View className="mb-6">
-          <View className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-4 mb-4 shadow-lg">
-            <FontAwesome name="quote-left" size={32} color="white" />
-          </View>
+          <GradientCard
+            gradientColors={["#667eea", "#764ba2"]}
+            style={{ padding: 20, borderRadius: 50, alignSelf: "center" }}
+          >
+            <AnimatedIcon
+              name="quote-left"
+              size={40}
+              color="white"
+              animationType="pulse"
+              library="FontAwesome"
+            />
+          </GradientCard>
         </View>
 
         <ThemedText className="text-4xl font-bold text-center mb-3 tracking-tight">
           Quotes Generator
         </ThemedText>
 
-        <View className="bg-gradient-to-r from-blue-500 to-purple-600 h-1 w-20 rounded-full mb-4" />
+        <LinearGradient
+          colors={["#667eea", "#764ba2"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ height: 4, width: 80, borderRadius: 2, marginBottom: 16, alignSelf: "center" }}
+        />
 
         <ThemedText className="text-lg text-center opacity-80 leading-6 px-4">
           Create, customize and save{"\n"}
           <ThemedText className="font-semibold">beautiful quotes</ThemedText>
         </ThemedText>
+
+        {/* Loading dots animation */}
+        <View className="mt-4">
+          <SimpleDots color={colorScheme === "dark" ? "#667eea" : "#764ba2"} />
+        </View>
 
         {/* Stats Section */}
         <View className="flex-row justify-around w-full mt-8 px-4">
@@ -278,9 +292,8 @@ export default function HomeScreen() {
       {/* Bottom Info Section */}
       <Animated.View className="px-6 mt-8" style={{ opacity: fadeAnim }}>
         <View
-          className={`rounded-2xl p-6 ${
-            colorScheme === "dark" ? "bg-gray-800/50" : "bg-gray-100/80"
-          }`}
+          className={`rounded-2xl p-6 ${colorScheme === "dark" ? "bg-gray-800/50" : "bg-gray-100/80"
+            }`}
         >
           <View className="flex-row items-center mb-3">
             <FontAwesome
@@ -297,7 +310,7 @@ export default function HomeScreen() {
             <View className="flex-row items-start">
               <View className="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3" />
               <ThemedText className="flex-1 opacity-80 leading-5">
-                Long-press any quote to see more options
+                MUltilpe Catgeory of quotes generation
               </ThemedText>
             </View>
             <View className="flex-row items-start">
