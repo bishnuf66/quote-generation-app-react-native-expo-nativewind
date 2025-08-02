@@ -4,7 +4,6 @@ import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Dimensions,
   ScrollView,
@@ -39,82 +38,14 @@ type QuoteType = {
 export default function FavoritesScreen() {
   const router = useRouter();
   const { savedQuotes, deleteQuote, quotes, updateQuotePosition } = useQuotes();
-  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(new Set());
-  const [loadingImages, setLoadingImages] = useState<{[key: string]: boolean}>({});
-  
-  // Ensure we have a valid image URL
-  const getImageUrl = (url: string | undefined): string => {
-    if (!url) return '';
-    
-    // If it's already a valid URL, return as is
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('file://')) {
-      return url;
-    }
-    
-    // If it starts with //, add https:
-    if (url.startsWith('//')) {
-      return `https:${url}`;
-    }
-    
-    // If it's a data URL, return as is
-    if (url.startsWith('data:')) {
-      return url;
-    }
-    
-    // If it's a relative URL, try to make it absolute
-    if (url.startsWith('/')) {
-      return `https:${url}`;
-    }
-    
-    // If it's a Pexels URL without protocol
-    if (url.includes('images.pexels.com')) {
-      return `https:${url}`;
-    }
-    
-    // Otherwise, assume it's a full URL without protocol
-    return `https://${url}`;
-  };
-  
-  // Check if we should show the image or fallback
-  const shouldShowImage = (url: string | undefined): boolean => {
-    if (!url) return false;
-    const fullUrl = getImageUrl(url);
-    return !failedImageUrls.has(fullUrl);
-  };
-  
-  // Handle image loading errors
-  const handleImageError = (url: string) => {
-    if (!url) return;
-    const fullUrl = getImageUrl(url);
-    console.log('Image failed to load, adding to failed set:', fullUrl);
-    
-    setLoadingImages(prev => ({
-      ...prev,
-      [fullUrl]: false
-    }));
-    
-    setFailedImageUrls(prev => {
-      const newSet = new Set(prev);
-      newSet.add(fullUrl);
-      return newSet;
-    });
-  };
-  
-  const handleImageLoadStart = (url: string) => {
-    const fullUrl = getImageUrl(url);
-    setLoadingImages(prev => ({
-      ...prev,
-      [fullUrl]: true
-    }));
-  };
-  
-  const handleImageLoadEnd = (url: string) => {
-    const fullUrl = getImageUrl(url);
-    setLoadingImages(prev => ({
-      ...prev,
-      [fullUrl]: false
-    }));
-  };
+  console.log("FavoritesScreen quotes:", savedQuotes);
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    new Set()
+  );
+  const [loadingImages, setLoadingImages] = useState<{
+    [key: string]: boolean;
+  }>({});
+
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const viewRefs = useRef<{ [key: string]: View | null }>({});
@@ -134,14 +65,19 @@ export default function FavoritesScreen() {
 
   const styles = StyleSheet.create({
     actionButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+      width: 40,
+      height: 40,
+      borderRadius: 20,
       justifyContent: "center",
       alignItems: "center",
       backgroundColor:
-        colorScheme === "dark" ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.8)",
-      marginHorizontal: 4,
+        colorScheme === "dark" ? "rgba(0,0,0,0.8)" : "rgba(255,255,255,0.9)",
+      marginHorizontal: 2,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.2,
+      shadowRadius: 1.5,
+      elevation: 2,
     } as ViewStyle,
     actionContainer: {
       position: "absolute",
@@ -185,7 +121,60 @@ export default function FavoritesScreen() {
     } as ViewStyle,
   });
 
+  // Helper function to get properly formatted image URL
+  const getImageUrl = (url: string | undefined): string => {
+    if (!url) {
+      console.log("getImageUrl: No URL provided");
+      return "";
+    }
+
+    console.log("getImageUrl - Original URL:", url);
+
+    // If it's already a valid URL, return as is
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("file://")
+    ) {
+      console.log("getImageUrl: Already a valid URL");
+      return url;
+    }
+
+    // If it starts with //, add https:
+    if (url.startsWith("//")) {
+      const result = `https:${url}`;
+      console.log("getImageUrl: Added https: to URL", result);
+      return result;
+    }
+
+    // If it's a data URL, return as is
+    if (url.startsWith("data:")) {
+      console.log("getImageUrl: Data URL detected");
+      return url;
+    }
+
+    // If it's a relative URL, try to make it absolute
+    if (url.startsWith("/")) {
+      const result = `https:${url}`;
+      console.log("getImageUrl: Converted relative URL to absolute", result);
+      return result;
+    }
+
+    // If it's a Pexels URL without protocol
+    if (url.includes("images.pexels.com")) {
+      const result = `https:${url}`;
+      console.log("getImageUrl: Fixed Pexels URL", result);
+      return result;
+    }
+
+    // Otherwise, assume it's a full URL without protocol
+    const result = `https://${url}`;
+    console.log("getImageUrl: Added https:// to URL", result);
+    return result;
+  };
+
   const handleDeleteQuote = (id: string) => {
+    console.log("Attempting to delete quote with ID:", id);
     Alert.alert("Delete Quote", "Are you sure you want to delete this quote?", [
       {
         text: "Cancel",
@@ -194,12 +183,14 @@ export default function FavoritesScreen() {
       {
         text: "Delete",
         onPress: () => {
+          console.log("Deleting quote with ID:", id);
           deleteQuote(id);
           // Also remove from failed images set if it exists
-          const quote = savedQuotes.find(q => q.id === id);
+          const quote = savedQuotes.find((q) => q.id === id);
           if (quote?.backgroundImage) {
             const fullUrl = getImageUrl(quote.backgroundImage);
-            setFailedImageUrls(prev => {
+            console.log("Removing image from failed set:", fullUrl);
+            setFailedImageUrls((prev) => {
               const newSet = new Set(prev);
               newSet.delete(fullUrl);
               return newSet;
@@ -213,25 +204,25 @@ export default function FavoritesScreen() {
 
   const handleEditQuote = (quote: QuoteType) => {
     // First update the current quote in the context
-    const existingQuote = quotes.find(q => q.id === quote.id);
+    const existingQuote = quotes.find((q) => q.id === quote.id);
     if (!existingQuote) {
       // If not in quotes, add it with default position
       const newQuote = {
         ...quote,
-        textPosition: { x: 50, y: 50 } // Default position if not set
+        textPosition: { x: 50, y: 50 }, // Default position if not set
       };
       updateQuotePosition(newQuote.id, newQuote.textPosition);
     }
-    
+
     // Navigate to customize tab with the quote data
     router.push({
       pathname: "/customize",
-      params: { 
+      params: {
         quoteId: quote.id,
         text: quote.text,
-        author: quote.author || '',
-        backgroundImage: quote.backgroundImage || ''
-      }
+        author: quote.author || "",
+        backgroundImage: quote.backgroundImage || "",
+      },
     });
   };
 
@@ -290,15 +281,18 @@ export default function FavoritesScreen() {
     color: string,
     bgColor: string,
     size: number = 20
-  ) => (
-    <TouchableOpacity
-      onPress={onPress}
-      className={`p-2 rounded-full ${bgColor} items-center justify-center`}
-      style={[styles.actionButton, { width: size + 12, height: size + 12 }]}
-    >
-      <Ionicons name={icon} size={size} color={color} />
-    </TouchableOpacity>
-  );
+  ) => {
+    console.log(`Rendering action button: ${icon}`);
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        className={`rounded-full ${bgColor} items-center justify-center`}
+        style={[styles.actionButton]}
+      >
+        <Ionicons name={icon} size={size} color={color} />
+      </TouchableOpacity>
+    );
+  };
 
   if (savedQuotes.length === 0) {
     return (
@@ -383,45 +377,22 @@ export default function FavoritesScreen() {
               >
                 {/* Image with overlay */}
                 <View className="relative aspect-square">
-                  {shouldShowImage(quote.backgroundImage) ? (
-                    <View className="w-full h-full bg-gray-200 dark:bg-gray-700">
-                      <Image
-                        source={{ 
-                          uri: getImageUrl(quote.backgroundImage)
-                        }}
-                        className="w-full h-full"
-                        contentFit="cover"
-                        transition={200}
-                        onError={() => {
-                          if (quote.backgroundImage) {
-                            handleImageError(quote.backgroundImage);
-                          }
-                        }}
-                        onLoadStart={() => {
-                          if (quote.backgroundImage) {
-                            handleImageLoadStart(quote.backgroundImage);
-                          }
-                        }}
-                        onLoadEnd={() => {
-                          if (quote.backgroundImage) {
-                            handleImageLoadEnd(quote.backgroundImage);
-                          }
-                        }}
-                      />
-                      {quote.backgroundImage && loadingImages[getImageUrl(quote.backgroundImage)] && (
-                        <View className="absolute inset-0 bg-black/30 items-center justify-center">
-                          <ActivityIndicator color="#ffffff" />
-                        </View>
-                      )}
-                    </View>
-                  ) : (
-                    <View className="w-full h-full bg-gray-200 dark:bg-gray-700 items-center justify-center">
-                      <Ionicons name="image-outline" size={48} color="#9ca3af" />
-                      <Text className="text-gray-500 mt-2 text-center px-2">
-                        Image not available
-                      </Text>
-                    </View>
-                  )}
+                  <View className="w-full h-full bg-gray-200 dark:bg-gray-700">
+                    <Image
+                      source={quote.backgroundImage}
+                      className="w-full h-full"
+                      contentFit="cover"
+                      transition={200}
+                    />
+                  </View>
+
+                  <View className="w-full h-full bg-gray-200 dark:bg-gray-700 items-center justify-center">
+                    <Ionicons name="image-outline" size={48} color="#9ca3af" />
+                    <Text className="text-gray-500 mt-2 text-center px-2">
+                      Image not available
+                    </Text>
+                  </View>
+
                   <View className="absolute inset-0 bg-black/30 p-4 justify-end">
                     <Text
                       className="text-white text-base font-medium mb-2"
@@ -446,12 +417,6 @@ export default function FavoritesScreen() {
                         — {quote.author}
                       </Text>
                     )}
-                  </View>
-                </View>
-
-                {/* Card Footer */}
-                <View className="p-3">
-                  <View className="flex-row justify-between items-center">
                     <Text className={`text-xs ${secondaryText}`}>
                       {new Date(quote.createdAt).toLocaleDateString(undefined, {
                         year: "numeric",
@@ -459,33 +424,47 @@ export default function FavoritesScreen() {
                         day: "numeric",
                       })}
                     </Text>
-                    <View className="flex-row space-x-1">
+                  </View>
+                </View>
+
+                {/* Card Footer */}
+                <View className="p-1 bg-white/80 dark:bg-black/50">
+                  <View className="flex-row justify-between items-center">
+                    <View className="flex-row space-x-2">
                       {renderActionButton(
                         () => handleEditQuote(quote as QuoteType),
                         "create-outline",
                         colorScheme === "dark" ? "#93c5fd" : "#1e40af",
-                        colorScheme === "dark" ? "bg-blue-900/30" : "bg-blue-100/80",
+                        colorScheme === "dark"
+                          ? "bg-blue-900/50"
+                          : "bg-blue-100/90",
                         16
                       )}
                       {renderActionButton(
                         () => handleShareQuote(quote as QuoteType),
                         "share-outline",
                         colorScheme === "dark" ? "#e5e7eb" : "#4b5563",
-                        colorScheme === "dark" ? "bg-gray-700/50" : "bg-gray-100/80",
+                        colorScheme === "dark"
+                          ? "bg-gray-700/60"
+                          : "bg-gray-200/90",
                         16
                       )}
                       {renderActionButton(
                         () => saveToGallery(quote as QuoteType),
                         "download-outline",
                         colorScheme === "dark" ? "#e5e7eb" : "#4b5563",
-                        colorScheme === "dark" ? "bg-gray-700/50" : "bg-gray-100/80",
+                        colorScheme === "dark"
+                          ? "bg-gray-700/60"
+                          : "bg-gray-200/90",
                         16
                       )}
                       {renderActionButton(
                         () => handleDeleteQuote(quote.id),
                         "trash-outline",
                         "#ef4444",
-                        colorScheme === "dark" ? "bg-red-900/30" : "bg-red-100/80",
+                        colorScheme === "dark"
+                          ? "bg-red-900/50"
+                          : "bg-red-100/90",
                         16
                       )}
                     </View>
