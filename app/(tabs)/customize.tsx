@@ -298,31 +298,7 @@ export default function CustomizeScreen() {
 
         {/* Instructions */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-            <AnimatedButton
-              title="Clear All"
-              onPress={() => {
-                setCustomText("");
-                setCustomAuthor("");
-                setSelectedImage("");
-                setCurrentQuote(null);
-                resetPosition();
-                setIsInitialized(false);
-              }}
-              gradientColors={["#ff7e5f", "#feb47b"]}
-              size="small"
-              variant="outline"
-              icon={
-                <AnimatedIcon
-                  name="trash"
-                  size={14}
-                  color="white"
-                  library="FontAwesome"
-                />
-              }
-              style={{ flex: 1 }}
-            />
-          </View>
+
 
           <GlassCard
             style={{ padding: 16, borderRadius: 12 }}
