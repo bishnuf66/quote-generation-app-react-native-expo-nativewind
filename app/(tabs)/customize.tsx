@@ -19,6 +19,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useQuotes } from "@/context/QuotesContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { QuoteType } from "@/types/quoteType";
 
 const { width: screenWidth } = Dimensions.get("window");
 const IMAGE_HEIGHT = 300;
@@ -35,7 +36,7 @@ export default function CustomizeScreen() {
   const [customAuthor, setCustomAuthor] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   const [isCustomQuote, setIsCustomQuote] = useState(false);
-  const [currentQuote, setCurrentQuote] = useState(null);
+  const [currentQuote, setCurrentQuote] = useState<null | QuoteType>(null);
   const [textDimensions, setTextDimensions] = useState({
     width: 250,
     height: 80,
@@ -162,7 +163,7 @@ export default function CustomizeScreen() {
   // Handle text layout to get dimensions for boundary calculations
   const onTextLayout = (event) => {
     const { width, height } = event.nativeEvent.layout;
-    setTextDimensions({ width: width + 20, height: height + 20 }); // Add padding
+    setTextDimensions({ width: width + 16, height: height + 16 }); // Add padding
   };
 
   // Save the customized quote
@@ -302,7 +303,7 @@ export default function CustomizeScreen() {
                   ]}
                 >
                   <ThemedText style={styles.quoteText}>
-                    "{customText || currentQuote?.text}"
+                    &quot;{customText || currentQuote?.text}&quot;
                   </ThemedText>
                   {(customAuthor || currentQuote?.author) && (
                     <ThemedText style={styles.authorText}>
@@ -335,7 +336,7 @@ export default function CustomizeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-            <FontAwesome name="image" size={20} color="#666" />
+            <FontAwesome name="image" size={16} color="#666" />
             <ThemedText style={styles.uploadText}>Select Image</ThemedText>
           </TouchableOpacity>
         </View>
@@ -368,12 +369,12 @@ export default function CustomizeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 16,
   },
   header: {
     alignItems: "center",
     marginTop: 50,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   headerText: {
     fontSize: 24,
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   textInput: {
     borderWidth: 1,
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   quoteInfo: {
-    marginBottom: 20,
+    marginBottom: 16,
     alignItems: "center",
   },
   quoteInfoText: {
@@ -406,11 +407,11 @@ const styles = StyleSheet.create({
   },
   noQuoteContainer: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   imageContainer: {
     height: IMAGE_HEIGHT,
-    marginBottom: 20,
+    marginBottom: 16,
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 2,
@@ -439,7 +440,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.75)",
     borderRadius: 8,
     maxWidth: 280,
-    minWidth: 200,
+    minWidth: 160,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -489,7 +490,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   resetButton: {
     flexDirection: "row",
@@ -516,10 +517,10 @@ const styles = StyleSheet.create({
   actionContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 20,
+    marginTop: 16,
   },
   actionButton: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     flexDirection: "row",
