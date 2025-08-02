@@ -13,7 +13,7 @@ import ViewShot from "react-native-view-shot";
 
 import { ThemedText } from "../../components/ThemedText";
 import { ThemedView } from "../../components/ThemedView";
-import { useQuotes } from "../context/QuotesContext";
+import { useQuotes } from "../../context/QuotesContext";
 import { useColorScheme } from "../hooks/useColorScheme";
 
 const backgroundImages = [
