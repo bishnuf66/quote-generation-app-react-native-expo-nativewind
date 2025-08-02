@@ -1,75 +1,89 @@
+import { StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  
+  const navigateTo = (screen: string) => {
+    router.push(screen);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <ScrollView style={styles.container}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title">Quotes Generator</ThemedText>
+        <ThemedText>Create, customize and save beautiful quotes</ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
+
+      <ThemedView style={styles.featuresContainer}>
+        <TouchableOpacity 
+          style={[styles.featureCard, {backgroundColor: colorScheme === 'dark' ? '#1D3D47' : '#A1CEDC'}]} 
+          onPress={() => navigateTo('/generate')}
+        >
+          <ThemedText type="subtitle">Generate Quotes</ThemedText>
+          <ThemedText>Create random quotes from various categories</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.featureCard, {backgroundColor: colorScheme === 'dark' ? '#2D3D47' : '#B1CEDC'}]} 
+          onPress={() => navigateTo('/customize')}
+        >
+          <ThemedText type="subtitle">Customize Quotes</ThemedText>
+          <ThemedText>Create your own quotes with custom images</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.featureCard, {backgroundColor: colorScheme === 'dark' ? '#3D3D47' : '#C1CEDC'}]} 
+          onPress={() => navigateTo('/saved')}
+        >
+          <ThemedText type="subtitle">Saved Quotes</ThemedText>
+          <ThemedText>View and manage your saved quotes</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
+
+      <ThemedView style={styles.infoContainer}>
+        <ThemedText type="subtitle">How to use</ThemedText>
+        <ThemedText>1. Generate a random quote or create your own</ThemedText>
+        <ThemedText>2. Customize the quote with different backgrounds</ThemedText>
+        <ThemedText>3. Drag and position the text anywhere on the image</ThemedText>
+        <ThemedText>4. Save your creation to your device</ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  header: {
+    padding: 20,
     alignItems: 'center',
-    gap: 8,
+    marginTop: 50,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  featuresContainer: {
+    padding: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  featureCard: {
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  infoContainer: {
+    padding: 20,
+    marginBottom: 30,
   },
 });
