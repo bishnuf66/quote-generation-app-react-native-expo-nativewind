@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/ThemedText";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
-import { GradientCard } from "@/components/ui/GradientCard";
+import { GlassCard, GradientCard } from "@/components/ui/GradientCard";
 import { useQuotes } from "@/context/QuotesContext";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,13 +13,14 @@ import {
   Alert,
   Animated,
   Dimensions,
+  RefreshControl,
   Image as RNImage,
   ScrollView,
   Share,
   Text,
   TouchableOpacity,
   useColorScheme,
-  View,
+  View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
@@ -42,32 +43,49 @@ type QuoteType = {
 export default function FavoritesScreen() {
   const router = useRouter();
   const { savedQuotes, deleteQuote, quotes, updateQuotePosition } = useQuotes();
-  console.log("FavoritesScreen quotes:", savedQuotes);
   const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
     new Set()
   );
   const [loadingImages, setLoadingImages] = useState<{
     [key: string]: boolean;
   }>({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
 
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Entrance animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    // Staggered entrance animation
+    Animated.sequence([
+      Animated.timing(headerAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Simulate refresh
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   }, []);
 
   const handleImageError = (url: string) => {
@@ -298,18 +316,66 @@ export default function FavoritesScreen() {
 
   const renderActionButton = (
     onPress: () => void,
-    icon: keyof typeof Ionicons.glyphMap,
+    icon: string,
     color: string,
-    bgColor: string,
-    size: number = 18
+    gradientColors: string[],
+    library: 'FontAwesome' | 'Ionicons' = 'Ionicons',
+    size: number = 16
   ) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.95,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
+    };
+
     return (
-      <TouchableOpacity
-        onPress={onPress}
-        className={`flex-1 rounded-lg ${bgColor} items-center justify-center py-2 mx-0.5`}
+      <Animated.View
+        style={{
+          flex: 1,
+          marginHorizontal: 2,
+          transform: [{ scale: scaleAnim }],
+        }}
       >
-        <Ionicons name={icon} size={size} color={color} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={1}
+        >
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 4,
+              borderRadius: 8,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <AnimatedIcon
+              name={icon}
+              size={size}
+              color={color}
+              library={library}
+              animationType="pulse"
+            />
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 
@@ -333,40 +399,58 @@ export default function FavoritesScreen() {
           >
             <GradientCard
               gradientColors={["#667eea", "#764ba2"]}
-              style={{ padding: 24, borderRadius: 50, marginBottom: 24 }}
+              style={{ padding: 32, borderRadius: 60, marginBottom: 32 }}
             >
               <AnimatedIcon
-                name="heart-outline"
-                size={64}
+                name="heart"
+                size={72}
                 color="white"
                 animationType="pulse"
-                library="Ionicons"
+                library="FontAwesome"
               />
             </GradientCard>
 
-            <ThemedText type="display" className="text-center mb-2">
+            <ThemedText type="display" className="text-center mb-4" shadow>
               No Favorites Yet
             </ThemedText>
 
-            <ThemedText className={`text-center mt-2 ${secondaryText} mb-8 max-w-xs leading-6`}>
-              Save your favorite quotes and they'll appear here as beautiful cards
+            <ThemedText className={`text-center ${secondaryText} mb-8 max-w-sm leading-6 text-lg`}>
+              Save your favorite quotes and they'll appear here as beautiful, shareable cards
             </ThemedText>
 
-            <AnimatedButton
-              title="Generate a Quote"
-              onPress={() => router.push("/generate")}
-              gradientColors={["#667eea", "#764ba2"]}
-              size="large"
-              icon={
-                <AnimatedIcon
-                  name="sparkles"
-                  size={20}
-                  color="white"
-                  animationType="bounce"
-                  library="Ionicons"
-                />
-              }
-            />
+            <View className="space-y-4 w-full max-w-xs">
+              <AnimatedButton
+                title="Generate a Quote"
+                onPress={() => router.push("/generate")}
+                gradientColors={["#667eea", "#764ba2"]}
+                size="large"
+                icon={
+                  <AnimatedIcon
+                    name="magic"
+                    size={20}
+                    color="white"
+                    animationType="bounce"
+                    library="FontAwesome"
+                  />
+                }
+              />
+
+              <AnimatedButton
+                title="Create Custom Quote"
+                onPress={() => router.push("/customize")}
+                gradientColors={["#f093fb", "#f5576c"]}
+                size="medium"
+                variant="outline"
+                icon={
+                  <AnimatedIcon
+                    name="edit"
+                    size={18}
+                    color="white"
+                    library="FontAwesome"
+                  />
+                }
+              />
+            </View>
           </Animated.View>
         </View>
       </LinearGradient>
@@ -374,17 +458,69 @@ export default function FavoritesScreen() {
   }
 
   return (
-    <View className={`flex-1 ${backgroundColor}`}>
-      {/* Header */}
-      <View className="pt-14 pb-4 px-4">
-        <Text className={`text-3xl font-bold ${textColor} mb-1`}>
-          Favorites
-        </Text>
-        <Text className={`text-base ${secondaryText}`}>
-          {savedQuotes.length} {savedQuotes.length === 1 ? "quote" : "quotes"}{" "}
-          saved
-        </Text>
-      </View>
+    <LinearGradient
+      colors={
+        colorScheme === "dark"
+          ? ["#0f0f23", "#1a1a2e"]
+          : ["#ffffff", "#f8fafc"]
+      }
+      style={{ flex: 1 }}
+    >
+      {/* Enhanced Header */}
+      <Animated.View
+        className="pt-14 pb-6 px-6"
+        style={{
+          opacity: headerAnim,
+          transform: [{
+            translateY: headerAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-20, 0],
+            })
+          }],
+        }}
+      >
+        <View className="flex-row items-center justify-between mb-2">
+          <View className="flex-1">
+            <ThemedText type="hero" className={textColor} shadow>
+              Favorites
+            </ThemedText>
+            <View className="flex-row items-center mt-2">
+              <AnimatedIcon
+                name="heart"
+                size={16}
+                color="#667eea"
+                animationType="pulse"
+                library="FontAwesome"
+              />
+              <ThemedText className={`ml-2 ${secondaryText} text-lg`}>
+                {savedQuotes.length} {savedQuotes.length === 1 ? "quote" : "quotes"} saved
+              </ThemedText>
+            </View>
+          </View>
+
+          {savedQuotes.length > 0 && (
+            <GlassCard
+              style={{ padding: 12, borderRadius: 12 }}
+              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}
+            >
+              <AnimatedIcon
+                name="grid"
+                size={20}
+                color={colorScheme === "dark" ? "#ffffff" : "#000000"}
+                library="Ionicons"
+              />
+            </GlassCard>
+          )}
+        </View>
+
+        {/* Decorative line */}
+        <LinearGradient
+          colors={["#667eea", "#764ba2", "#f093fb"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ height: 3, borderRadius: 2, marginTop: 8 }}
+        />
+      </Animated.View>
 
       <ScrollView
         className="flex-1"
@@ -394,188 +530,248 @@ export default function FavoritesScreen() {
           paddingTop: 8,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#667eea", "#764ba2"]}
+            tintColor="#667eea"
+          />
+        }
       >
-        <View
+        <Animated.View
           className="flex-row flex-wrap"
-          style={{ marginHorizontal: -CARD_GAP / 2 }}
+          style={{
+            marginHorizontal: -CARD_GAP / 2,
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }}
         >
-          {savedQuotes.map((quote) => (
-            <View
-              key={quote.id}
-              className="mb-4"
-              style={{
-                width: CARD_WIDTH,
-                marginHorizontal: CARD_GAP / 2,
-              }}
-            >
-              <View
-                className="rounded-2xl overflow-hidden bg-white dark:bg-gray-800 shadow-lg"
+          {savedQuotes.map((quote, index) => {
+            const cardAnim = useRef(new Animated.Value(0)).current;
+
+            React.useEffect(() => {
+              Animated.timing(cardAnim, {
+                toValue: 1,
+                duration: 600,
+                delay: index * 100,
+                useNativeDriver: true,
+              }).start();
+            }, [cardAnim, index]);
+
+            return (
+              <Animated.View
+                key={quote.id}
+                className="mb-4"
                 style={{
-                  shadowColor: colorScheme === "dark" ? "#1f2937" : "#9ca3af",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 4,
-                  elevation: 4,
+                  width: CARD_WIDTH,
+                  marginHorizontal: CARD_GAP / 2,
+                  opacity: cardAnim,
+                  transform: [{
+                    translateY: cardAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [20, 0],
+                    })
+                  }],
                 }}
               >
-                {/* Content to be saved to gallery */}
-                <View
-                  ref={(ref) => {
-                    if (ref) {
-                      viewRefs.current[quote.id] = ref;
-                      console.log(`Stored ref for quote ${quote.id}:`, !!ref);
-                    }
+                <GradientCard
+                  gradientColors={
+                    selectedQuote === quote.id
+                      ? ["#667eea", "#764ba2"]
+                      : ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]
+                  }
+                  onPress={() => setSelectedQuote(selectedQuote === quote.id ? null : quote.id)}
+                  style={{
+                    borderRadius: 20,
+                    overflow: 'hidden',
+                    borderWidth: selectedQuote === quote.id ? 2 : 0,
+                    borderColor: '#667eea',
                   }}
-                  className="relative"
-                  collapsable={false}
                 >
-                  {/* Image with overlay */}
-                  <View className="aspect-square bg-gray-200 dark:bg-gray-700">
-                    {quote.backgroundImage ? (
-                      <>
-                        {/* Use RNImage for view-shot compatibility */}
-                        <RNImage
-                          source={{ uri: quote.backgroundImage }}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            resizeMode: "cover",
-                          }}
-                          onError={() => {
-                            console.log(
-                              "Error loading image:",
-                              quote.backgroundImage
-                            );
-                            if (quote.backgroundImage) {
-                              handleImageError(quote.backgroundImage);
-                            }
-                          }}
-                          onLoadStart={() => {
-                            if (quote.backgroundImage) {
-                              handleImageLoadStart(quote.backgroundImage);
-                            }
-                          }}
-                          onLoadEnd={() => {
-                            if (quote.backgroundImage) {
-                              handleImageLoadEnd(quote.backgroundImage);
-                            }
-                          }}
-                        />
-                        {loadingImages[quote.backgroundImage] && (
-                          <View className="absolute inset-0 bg-black/30 items-center justify-center">
-                            <ActivityIndicator color="#ffffff" size="large" />
-                          </View>
-                        )}
-                        {failedImageUrls.has(quote.backgroundImage) && (
-                          <View className="absolute inset-0 bg-gray-200 dark:bg-gray-700 items-center justify-center">
-                            <Ionicons
-                              name="image-outline"
-                              size={48}
-                              color="#9ca3af"
-                            />
-                            <Text className="text-gray-500 mt-2 text-center px-2">
-                              Couldn&apos;t load image
-                            </Text>
-                          </View>
-                        )}
-                      </>
-                    ) : (
-                      <View className="w-full h-full items-center justify-center">
-                        <Ionicons
-                          name="image-outline"
-                          size={48}
-                          color="#9ca3af"
-                        />
-                        <Text className="text-gray-500 mt-2 text-center px-2">
-                          No image available
-                        </Text>
-                      </View>
-                    )}
+                  {/* Content to be saved to gallery */}
+                  <View
+                    ref={(ref) => {
+                      if (ref) {
+                        viewRefs.current[quote.id] = ref;
+                        console.log(`Stored ref for quote ${quote.id}:`, !!ref);
+                      }
+                    }}
+                    className="relative"
+                    collapsable={false}
+                  >
+                    {/* Image with overlay */}
+                    <View className="aspect-square bg-gray-200 dark:bg-gray-700">
+                      {quote.backgroundImage ? (
+                        <>
+                          {/* Use RNImage for view-shot compatibility */}
+                          <RNImage
+                            source={{ uri: quote.backgroundImage }}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              position: "absolute",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              resizeMode: "cover",
+                            }}
+                            onError={() => {
+                              console.log(
+                                "Error loading image:",
+                                quote.backgroundImage
+                              );
+                              if (quote.backgroundImage) {
+                                handleImageError(quote.backgroundImage);
+                              }
+                            }}
+                            onLoadStart={() => {
+                              if (quote.backgroundImage) {
+                                handleImageLoadStart(quote.backgroundImage);
+                              }
+                            }}
+                            onLoadEnd={() => {
+                              if (quote.backgroundImage) {
+                                handleImageLoadEnd(quote.backgroundImage);
+                              }
+                            }}
+                          />
+                          {loadingImages[quote.backgroundImage] && (
+                            <View className="absolute inset-0 bg-black/30 items-center justify-center">
+                              <ActivityIndicator color="#ffffff" size="large" />
+                            </View>
+                          )}
+                          {failedImageUrls.has(quote.backgroundImage) && (
+                            <View className="absolute inset-0 bg-gray-200 dark:bg-gray-700 items-center justify-center">
+                              <Ionicons
+                                name="image-outline"
+                                size={48}
+                                color="#9ca3af"
+                              />
+                              <Text className="text-gray-500 mt-2 text-center px-2">
+                                Couldn&apos;t load image
+                              </Text>
+                            </View>
+                          )}
+                        </>
+                      ) : (
+                        <View className="w-full h-full items-center justify-center">
+                          <Ionicons
+                            name="image-outline"
+                            size={48}
+                            color="#9ca3af"
+                          />
+                          <Text className="text-gray-500 mt-2 text-center px-2">
+                            No image available
+                          </Text>
+                        </View>
+                      )}
 
-                    <View className="absolute inset-0 bg-black/30 p-4 justify-end">
-                      <Text
-                        className="text-white text-base font-medium mb-2"
-                        numberOfLines={3}
-                        style={{
-                          textShadowColor: "rgba(0,0,0,0.8)",
-                          textShadowOffset: { width: 0, height: 1 },
-                          textShadowRadius: 2,
-                        }}
-                      >
-                        &quot;{quote.text}&quot;
-                      </Text>
-                      {quote.author && quote.author !== "Unknown" && (
+                      <View className="absolute inset-0 bg-black/30 p-4 justify-end">
                         <Text
-                          className="text-cyan-300 text-sm font-medium text-right"
+                          className="text-white text-base font-medium mb-2"
+                          numberOfLines={3}
                           style={{
                             textShadowColor: "rgba(0,0,0,0.8)",
                             textShadowOffset: { width: 0, height: 1 },
                             textShadowRadius: 2,
                           }}
                         >
-                          — {quote.author}
+                          &quot;{quote.text}&quot;
                         </Text>
-                      )}
-                      <Text
-                        className="text-xs text-right text-sky-50"
-                        style={{
-                          textShadowColor: "rgba(0,0,0,0.8)",
-                          textShadowOffset: { width: 0, height: 1 },
-                          textShadowRadius: 2,
-                        }}
-                      >
-                        {new Date(quote.createdAt).toLocaleDateString(
-                          undefined,
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          }
+                        {quote.author && quote.author !== "Unknown" && (
+                          <Text
+                            className="text-cyan-300 text-sm font-medium text-right"
+                            style={{
+                              textShadowColor: "rgba(0,0,0,0.8)",
+                              textShadowOffset: { width: 0, height: 1 },
+                              textShadowRadius: 2,
+                            }}
+                          >
+                            — {quote.author}
+                          </Text>
                         )}
-                      </Text>
+                        <Text
+                          className="text-xs text-right text-sky-50"
+                          style={{
+                            textShadowColor: "rgba(0,0,0,0.8)",
+                            textShadowOffset: { width: 0, height: 1 },
+                            textShadowRadius: 2,
+                          }}
+                        >
+                          {new Date(quote.createdAt).toLocaleDateString(
+                            undefined,
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
 
-                {/* Card Footer */}
-                <View className="p-2 bg-white/80 dark:bg-black/50">
-                  <View className="flex-row justify-between items-center w-full">
-                    {renderActionButton(
-                      () => handleEditQuote(quote as QuoteType),
-                      "create-outline",
-                      colorScheme === "dark" ? "#ffffff" : "#000000",
-                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
-                    )}
-                    {renderActionButton(
-                      () => handleShareQuote(quote as QuoteType),
-                      "share-outline",
-                      colorScheme === "dark" ? "#ffffff" : "#000000",
-                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
-                    )}
-                    {renderActionButton(
-                      () => saveToGallery(quote as QuoteType),
-                      "download-outline",
-                      colorScheme === "dark" ? "#ffffff" : "#000000",
-                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
-                    )}
-                    {renderActionButton(
-                      () => handleDeleteQuote(quote.id),
-                      "trash-outline",
-                      "#ef4444",
-                      colorScheme === "dark" ? "bg-gray-700/80" : "bg-white/80"
-                    )}
+                  {/* Enhanced Card Footer */}
+                  <View className="p-3 bg-black/20">
+                    <View className="flex-row justify-between items-center w-full">
+                      {renderActionButton(
+                        () => handleEditQuote(quote as QuoteType),
+                        "edit",
+                        "white",
+                        ["#667eea", "#764ba2"],
+                        "FontAwesome"
+                      )}
+                      {renderActionButton(
+                        () => handleShareQuote(quote as QuoteType),
+                        "share",
+                        "white",
+                        ["#4facfe", "#00f2fe"],
+                        "FontAwesome"
+                      )}
+                      {renderActionButton(
+                        () => saveToGallery(quote as QuoteType),
+                        "download",
+                        "white",
+                        ["#11998e", "#38ef7d"],
+                        "FontAwesome"
+                      )}
+                      {renderActionButton(
+                        () => handleDeleteQuote(quote.id),
+                        "trash",
+                        "white",
+                        ["#ff7e5f", "#feb47b"],
+                        "FontAwesome"
+                      )}
+                    </View>
+
+                    {/* Quote metadata */}
+                    <View className="mt-3 pt-3 border-t border-white/20">
+                      <View className="flex-row justify-between items-center">
+                        <View className="flex-row items-center">
+                          <AnimatedIcon
+                            name="tag"
+                            size={12}
+                            color="rgba(255,255,255,0.7)"
+                            library="FontAwesome"
+                          />
+                          <Text className="text-white/70 text-xs ml-1">
+                            {quote.category || 'General'}
+                          </Text>
+                        </View>
+                        <Text className="text-white/70 text-xs">
+                          {new Date(quote.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
+                </GradientCard>
+              </Animated.View>
+            );
+          })}
+        </Animated.View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }

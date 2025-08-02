@@ -8,18 +8,21 @@ import {
   Animated,
   Dimensions,
   PanResponder,
+  ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
+import { GlassCard } from "@/components/ui/GradientCard";
 import { useQuotes } from "@/context/QuotesContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { QuoteType } from "@/types/quoteType";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width: screenWidth } = Dimensions.get("window");
 const IMAGE_HEIGHT = 300;
@@ -83,7 +86,7 @@ export default function CustomizeScreen() {
       setCurrentQuote(null);
       pan.setValue({ x: IMAGE_WIDTH / 2 - 125, y: IMAGE_HEIGHT / 2 - 40 });
     }
-  }, [params.text, params.author, params.backgroundImage, quotes.length]);
+  }, [params.text, params.author, params.backgroundImage, quotes.length, params, quotes, pan]);
 
   // Create PanResponder for drag functionality
   const panResponder = useRef(
@@ -209,160 +212,379 @@ export default function CustomizeScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <View contentContainerStyle={{ paddingBottom: 40 }}>
-        <ThemedView style={styles.header}>
-          <ThemedText style={styles.headerText}>Customize Quote</ThemedText>
-          <ThemedText style={styles.instructionText}>
-            Drag the quote to position it anywhere on the image
-          </ThemedText>
-        </ThemedView>
+    <LinearGradient
+      colors={
+        colorScheme === "dark"
+          ? ["#0f0f23", "#1a1a2e"]
+          : ["#ffffff", "#f8fafc"]
+      }
+      style={{ flex: 1 }}
+    >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Enhanced Header */}
+        <View style={{ paddingTop: 56, paddingBottom: 24, paddingHorizontal: 24 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="hero" shadow>
+                Customize
+              </ThemedText>
+              <ThemedText style={{
+                color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                fontSize: 16,
+                marginTop: 4
+              }}>
+                Drag the quote to position it perfectly
+              </ThemedText>
+            </View>
 
-        {isCustomQuote ? (
-          <ThemedView style={styles.inputContainer}>
-            <TextInput
-              style={[
-                styles.textInput,
-                { color: colorScheme === "dark" ? "#fff" : "#000" },
-              ]}
-              placeholder="Enter your quote"
-              placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-              value={customText}
-              onChangeText={setCustomText}
-              multiline
-            />
-            <TextInput
-              style={[
-                styles.textInput,
-                { color: colorScheme === "dark" ? "#fff" : "#000" },
-              ]}
-              placeholder="Author (optional)"
-              placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-              value={customAuthor}
-              onChangeText={setCustomAuthor}
-            />
-          </ThemedView>
-        ) : currentQuote ? (
-          <ThemedView style={styles.quoteInfo}>
-            <ThemedText style={styles.quoteInfoText}>
-              Drag the quote text to position it on the image
-            </ThemedText>
-          </ThemedView>
-        ) : (
-          <ThemedView style={styles.noQuoteContainer}>
-            <ThemedText>
-              No quote selected. Generate a quote first or create a custom one.
-            </ThemedText>
-          </ThemedView>
-        )}
-
-        <ThemedView style={styles.imageContainer}>
-          <ViewShot ref={viewShotRef} style={styles.viewShot}>
-            {selectedImage ? (
-              <Image
-                source={{ uri: selectedImage }}
-                style={styles.backgroundImage}
+            <GlassCard
+              style={{ padding: 12, borderRadius: 12 }}
+              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}
+            >
+              <AnimatedIcon
+                name="magic"
+                size={20}
+                color={colorScheme === "dark" ? "#ffffff" : "#000000"}
+                animationType="pulse"
+                library="FontAwesome"
               />
-            ) : (
-              <View
-                style={[
-                  styles.backgroundImage,
-                  {
-                    backgroundColor:
-                      colorScheme === "dark" ? "#333" : "#f0f0f0",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                ]}
-              >
-                <ThemedText style={styles.placeholderText}>
-                  Select an image below
+            </GlassCard>
+          </View>
+
+          {/* Decorative line */}
+          <LinearGradient
+            colors={["#667eea", "#764ba2", "#f093fb"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ height: 3, borderRadius: 2 }}
+          />
+        </View>
+
+        {/* Quick Instructions */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+          <GlassCard
+            style={{ padding: 16, borderRadius: 12 }}
+            backgroundColor={colorScheme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.05)"}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <AnimatedIcon
+                name="lightbulb-o"
+                size={16}
+                color="#667eea"
+                library="FontAwesome"
+              />
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <ThemedText style={{ fontWeight: '600', marginBottom: 4 }}>
+                  How to customize:
+                </ThemedText>
+                <ThemedText style={{ fontSize: 14, opacity: 0.8, lineHeight: 20 }}>
+                  1. Enter your quote and author{'\n'}
+                  2. Select a background image{'\n'}
+                  3. Drag the quote to position it perfectly
                 </ThemedText>
               </View>
-            )}
+            </View>
+          </GlassCard>
+        </View>
 
-            {(customText || currentQuote) && (
-              <Animated.View
-                {...panResponder.panHandlers}
+        {isCustomQuote ? (
+          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+            <GlassCard
+              style={{ padding: 20, borderRadius: 16, marginBottom: 16 }}
+              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <AnimatedIcon
+                  name="quote-left"
+                  size={16}
+                  color="#667eea"
+                  library="FontAwesome"
+                />
+                <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
+                  Your Quote
+                </ThemedText>
+              </View>
+              <TextInput
                 style={[
-                  styles.draggableContainer,
                   {
-                    transform: [
-                      { translateX: pan.x },
-                      { translateY: pan.y },
-                      { scale: scale },
-                    ],
-                  },
+                    color: colorScheme === "dark" ? "#fff" : "#000",
+                    fontSize: 16,
+                    minHeight: 80,
+                    textAlignVertical: 'top',
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                    borderRadius: 12,
+                    padding: 12,
+                  }
                 ]}
-                onLayout={onTextLayout}
-              >
-                <View
-                  style={[
-                    styles.textContainer,
-                    isDragging && styles.textContainerDragging,
-                  ]}
+                placeholder="Enter your inspirational quote..."
+                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+                value={customText}
+                onChangeText={setCustomText}
+                multiline
+              />
+            </GlassCard>
+
+            <GlassCard
+              style={{ padding: 20, borderRadius: 16 }}
+              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <AnimatedIcon
+                  name="user"
+                  size={16}
+                  color="#667eea"
+                  library="FontAwesome"
+                />
+                <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
+                  Author
+                </ThemedText>
+              </View>
+              <TextInput
+                style={[
+                  {
+                    color: colorScheme === "dark" ? "#fff" : "#000",
+                    fontSize: 16,
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                    borderRadius: 12,
+                    padding: 12,
+                  }
+                ]}
+                placeholder="Author name (optional)"
+                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+                value={customAuthor}
+                onChangeText={setCustomAuthor}
+              />
+            </GlassCard>
+          </View>
+        ) : currentQuote ? (
+          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+            <GlassCard
+              style={{ padding: 16, borderRadius: 12 }}
+              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <AnimatedIcon
+                  name="info-circle"
+                  size={16}
+                  color="#667eea"
+                  library="FontAwesome"
+                />
+                <ThemedText style={{ marginLeft: 8, fontStyle: 'italic' }}>
+                  Drag the quote text to position it on the image
+                </ThemedText>
+              </View>
+            </GlassCard>
+          </View>
+        ) : (
+          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+            <GlassCard
+              style={{ padding: 20, borderRadius: 12 }}
+              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+            >
+              <View style={{ alignItems: 'center' }}>
+                <AnimatedIcon
+                  name="exclamation-triangle"
+                  size={24}
+                  color="#f093fb"
+                  animationType="pulse"
+                  library="FontAwesome"
+                />
+                <ThemedText style={{ marginTop: 8, textAlign: 'center' }}>
+                  No quote selected. Generate a quote first or create a custom one above.
+                </ThemedText>
+              </View>
+            </GlassCard>
+          </View>
+        )}
+
+        {/* Enhanced Image Container */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+          <View style={{
+            height: IMAGE_HEIGHT,
+            borderRadius: 16,
+            overflow: "hidden",
+            borderWidth: 2,
+            borderColor: colorScheme === "dark" ? "#667eea" : "#764ba2",
+            shadowColor: "#667eea",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.2,
+            shadowRadius: 8,
+            elevation: 8,
+          }}>
+            <ViewShot ref={viewShotRef} style={{ flex: 1, position: "relative" }}>
+              {selectedImage ? (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={{ flex: 1, width: "100%", height: "100%" }}
+                />
+              ) : (
+                <LinearGradient
+                  colors={colorScheme === "dark" ? ["#1a1a2e", "#16213e"] : ["#f8fafc", "#e2e8f0"]}
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                 >
-                  <ThemedText style={styles.quoteText}>
-                    &quot;{customText || currentQuote?.text}&quot;
-                  </ThemedText>
-                  {(customAuthor || currentQuote?.author) && (
-                    <ThemedText style={styles.authorText}>
-                      - {customAuthor || currentQuote?.author}
-                    </ThemedText>
-                  )}
-                </View>
-                {/* Drag handle indicator */}
-                <View
-                  style={[
-                    styles.dragHandle,
-                    isDragging && styles.dragHandleActive,
-                  ]}
-                >
-                  <FontAwesome
-                    name="arrows"
-                    size={12}
-                    color={isDragging ? "#fff" : "rgba(255,255,255,0.8)"}
+                  <AnimatedIcon
+                    name="image"
+                    size={48}
+                    color={colorScheme === "dark" ? "#667eea" : "#764ba2"}
+                    animationType="pulse"
+                    library="FontAwesome"
                   />
-                </View>
-              </Animated.View>
-            )}
-          </ViewShot>
-        </ThemedView>
+                  <ThemedText style={{
+                    fontSize: 18,
+                    marginTop: 12,
+                    opacity: 0.7,
+                    textAlign: "center"
+                  }}>
+                    Tap "Select Image" to add background
+                  </ThemedText>
+                  <ThemedText style={{
+                    fontSize: 14,
+                    marginTop: 4,
+                    opacity: 0.5,
+                    textAlign: "center"
+                  }}>
+                    Your quote will appear here
+                  </ThemedText>
+                </LinearGradient>
+              )}
 
-        <View style={styles.controlsContainer}>
-          <TouchableOpacity style={styles.resetButton} onPress={resetPosition}>
-            <FontAwesome name="crosshairs" size={16} color="#666" />
-            <ThemedText style={styles.resetButtonText}>Center</ThemedText>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
-            <FontAwesome name="image" size={16} color="#666" />
-            <ThemedText style={styles.uploadText}>Select Image</ThemedText>
-          </TouchableOpacity>
+              {(customText || currentQuote) && (
+                <Animated.View
+                  {...panResponder.panHandlers}
+                  style={[
+                    styles.draggableContainer,
+                    {
+                      transform: [
+                        { translateX: pan.x },
+                        { translateY: pan.y },
+                        { scale: scale },
+                      ],
+                    },
+                  ]}
+                  onLayout={onTextLayout}
+                >
+                  <View
+                    style={[
+                      styles.textContainer,
+                      isDragging && styles.textContainerDragging,
+                    ]}
+                  >
+                    <ThemedText style={styles.quoteText}>
+                      &quot;{customText || currentQuote?.text}&quot;
+                    </ThemedText>
+                    {(customAuthor || currentQuote?.author) && (
+                      <ThemedText style={styles.authorText}>
+                        - {customAuthor || currentQuote?.author}
+                      </ThemedText>
+                    )}
+                  </View>
+                  {/* Drag handle indicator */}
+                  <View
+                    style={[
+                      styles.dragHandle,
+                      isDragging && styles.dragHandleActive,
+                    ]}
+                  >
+                    <FontAwesome
+                      name="arrows"
+                      size={12}
+                      color={isDragging ? "#fff" : "rgba(255,255,255,0.8)"}
+                    />
+                  </View>
+                </Animated.View>
+              )}
+            </ViewShot>
+          </View>
         </View>
 
-        <View style={styles.actionContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.favoriteButton]}
-            onPress={handleAddToFavorites}
-          >
-            <FontAwesome name="heart" size={16} color="white" />
-            <ThemedText style={styles.actionButtonText}>
-              Add to Favorites
-            </ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.saveButton]}
-            onPress={handleSaveToDevice}
-          >
-            <FontAwesome name="save" size={16} color="white" />
-            <ThemedText style={styles.actionButtonText}>
-              Save to Device
-            </ThemedText>
-          </TouchableOpacity>
+        {/* Enhanced Controls */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <AnimatedButton
+              title="Center Text"
+              onPress={resetPosition}
+              gradientColors={["#4facfe", "#00f2fe"]}
+              size="small"
+              icon={
+                <AnimatedIcon
+                  name="crosshairs"
+                  size={14}
+                  color="white"
+                  library="FontAwesome"
+                />
+              }
+              style={{ flex: 1, marginRight: 8 }}
+            />
+
+            <AnimatedButton
+              title="Select Image"
+              onPress={pickImage}
+              gradientColors={["#f093fb", "#f5576c"]}
+              size="small"
+              icon={
+                <AnimatedIcon
+                  name="image"
+                  size={14}
+                  color="white"
+                  animationType="pulse"
+                  library="FontAwesome"
+                />
+              }
+              style={{ flex: 1, marginLeft: 8 }}
+            />
+          </View>
         </View>
-      </View>
-    </ThemedView>
+
+        <View style={{ paddingHorizontal: 24, paddingTop: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+            <AnimatedButton
+              title="Add to Favorites"
+              onPress={handleAddToFavorites}
+              gradientColors={["#667eea", "#764ba2"]}
+              size="medium"
+              icon={
+                <AnimatedIcon
+                  name="heart"
+                  size={16}
+                  color="white"
+                  animationType="pulse"
+                  library="FontAwesome"
+                />
+              }
+              style={{ flex: 1, marginHorizontal: 8 }}
+            />
+
+            <AnimatedButton
+              title="Save to Device"
+              onPress={handleSaveToDevice}
+              gradientColors={["#11998e", "#38ef7d"]}
+              size="medium"
+              icon={
+                <AnimatedIcon
+                  name="download"
+                  size={16}
+                  color="white"
+                  library="FontAwesome"
+                />
+              }
+              style={{ flex: 1, marginHorizontal: 8 }}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 

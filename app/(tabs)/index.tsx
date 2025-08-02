@@ -13,7 +13,9 @@ import { ThemedText } from "@/components/ThemedText";
 import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
 import { GradientCard } from "@/components/ui/GradientCard";
 import { SimpleDots } from "@/components/ui/SimpleLoader";
+import { commonGradients } from "@/constants/Theme";
 import { useColorScheme } from "@/hooks/useColorScheme";
+
 
 const { width } = Dimensions.get("window");
 
@@ -267,7 +269,7 @@ export default function HomeScreen() {
           icon="magic"
           onPress={() => navigateTo("/generate")}
           scaleAnim={scaleAnim1}
-          gradientColors={["#667eea", "#764ba2"]}
+          gradientColors={commonGradients.primary}
         />
 
         <FeatureCard
@@ -276,7 +278,7 @@ export default function HomeScreen() {
           icon="paint-brush"
           onPress={() => navigateTo("/customize")}
           scaleAnim={scaleAnim2}
-          gradientColors={["#f093fb", "#f5576c"]}
+          gradientColors={commonGradients.secondary}
         />
 
         <FeatureCard
@@ -285,7 +287,7 @@ export default function HomeScreen() {
           icon="heart"
           onPress={() => navigateTo("/favorites")}
           scaleAnim={scaleAnim3}
-          gradientColors={["#4facfe", "#00f2fe"]}
+          gradientColors={commonGradients.accent}
         />
       </View>
 
