@@ -303,7 +303,7 @@ export default function FavoritesScreen() {
           No Favorites Yet
         </Text>
         <Text className={`text-center mt-2 ${secondaryText} mb-8 max-w-xs`}>
-          Save your favorite quotes and they'll appear here
+          Save your favorite quotes and they&apos;ll appear here
         </Text>
         <TouchableOpacity
           className="bg-cyan-600 px-8 py-4 rounded-full flex-row items-center shadow-lg shadow-cyan-500/20"
@@ -424,7 +424,7 @@ export default function FavoritesScreen() {
                               color="#9ca3af"
                             />
                             <Text className="text-gray-500 mt-2 text-center px-2">
-                              Couldn't load image
+                              Couldn&apos;t load image
                             </Text>
                           </View>
                         )}
@@ -452,7 +452,7 @@ export default function FavoritesScreen() {
                           textShadowRadius: 2,
                         }}
                       >
-                        "{quote.text}"
+                        &quot;{quote.text}&quot;
                       </Text>
                       {quote.author && quote.author !== "Unknown" && (
                         <Text

@@ -262,12 +262,22 @@ export default function GenerateScreen() {
 
   const handleSaveToDevice = async () => {
     try {
+      if (!quote) {
+        Alert.alert("Error", "No quote to save!");
+        return;
+      }
+
+      console.log("Attempting to capture quote card...");
       const uri = await viewShotRef.current?.capture?.();
       if (uri) {
+        console.log("Captured successfully:", uri);
         await saveToDevice(uri);
         Alert.alert("Success", "Quote saved to device!");
+      } else {
+        Alert.alert("Error", "Failed to capture quote image.");
       }
     } catch (error) {
+      console.error("Error saving to device:", error);
       Alert.alert("Error", "Failed to save quote to device.");
     }
   };
@@ -415,52 +425,135 @@ export default function GenerateScreen() {
             </ScrollView>
           </View>
         </View>
-        <ViewShot
-          ref={viewShotRef}
-          options={{ fileName: "quote", format: "jpg", quality: 0.9 }}
-        >
-          <View className="mx-5 mt-6 rounded-2xl bg-black/60 items-center justify-center min-h-[220px] shadow-lg overflow-hidden">
-            <View className="absolute inset-0">
+
+        {/* Quote Card - Only this section will be captured */}
+        <View className="mx-5 mt-6">
+          <ViewShot
+            ref={viewShotRef}
+            options={{
+              fileName: "quote",
+              format: "png",
+              quality: 1.0,
+              result: "tmpfile",
+            }}
+            style={{
+              width: "100%",
+              aspectRatio: 1,
+            }}
+          >
+            <View
+              style={{
+                width: "100%",
+                aspectRatio: 1,
+                borderRadius: 16,
+                backgroundColor: "rgba(0,0,0,0.6)",
+                overflow: "hidden",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+              }}
+            >
               <Image
                 source={{ uri: backgroundUrl }}
                 style={{
-                  width: "100%",
-                  height: "100%",
-                  resizeMode: "cover",
+                  position: "absolute",
                   top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
+                  width: "100%",
+                  height: "100%",
+                  resizeMode: "cover",
                 }}
               />
+              <View
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  padding: 24,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                {loading ? (
+                  <ActivityIndicator size="large" color="#A1CEDC" />
+                ) : error ? (
+                  <View style={{ alignItems: "center", padding: 16 }}>
+                    <Text
+                      style={{
+                        color: "#f87171",
+                        textAlign: "center",
+                        marginBottom: 8,
+                      }}
+                    >
+                      {error}
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: "#0e7490",
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                      }}
+                      onPress={() =>
+                        generateNewQuoteAndImage(selectedQuoteCategory)
+                      }
+                    >
+                      <Text style={{ color: "white", fontWeight: "bold" }}>
+                        Try Again
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : quote ? (
+                  <View
+                    style={{
+                      padding: 16,
+                      width: "100%",
+                      flex: 1,
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 20,
+                        fontWeight: "600",
+                        color: "white",
+                        textAlign: "center",
+                        marginBottom: 24,
+                        textShadowColor: "rgba(0,0,0,0.8)",
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 2,
+                        lineHeight: 28,
+                      }}
+                    >
+                      "{quote.text}"
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        color: "#67e8f9",
+                        textAlign: "right",
+                        width: "100%",
+                        textShadowColor: "rgba(0,0,0,0.8)",
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 2,
+                      }}
+                    >
+                      — {quote.author}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             </View>
-            <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 p-4 justify-center items-center" />
-            {loading ? (
-              <ActivityIndicator size="large" color="#A1CEDC" />
-            ) : error ? (
-              <View className="items-center p-4">
-                <Text className="text-red-400 text-center mb-2">{error}</Text>
-                <TouchableOpacity
-                  className="bg-cyan-700 px-4 py-2 rounded-lg"
-                  onPress={() =>
-                    generateNewQuoteAndImage(selectedQuoteCategory)
-                  }
-                >
-                  <Text className="text-white font-bold">Try Again</Text>
-                </TouchableOpacity>
-              </View>
-            ) : quote ? (
-              <View className="p-4">
-                <Text className="text-xl font-semibold text-white text-center mb-3 drop-shadow-lg">
-                  "{quote.text}"
-                </Text>
-                <Text className="text-base text-cyan-200 text-right w-full mb-4">
-                  - {quote.author}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        </ViewShot>
+          </ViewShot>
+        </View>
+
         <View className="mt-4 px-5">
           <View className="flex-row justify-around flex-wrap">
             <TouchableOpacity
