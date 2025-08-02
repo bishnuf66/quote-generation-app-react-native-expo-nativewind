@@ -1,17 +1,14 @@
-import { StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
+import { ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  
+
   const navigateTo = (screen: string) => {
     router.push(screen);
   };
@@ -24,25 +21,34 @@ export default function HomeScreen() {
       </ThemedView>
 
       <ThemedView style={styles.featuresContainer}>
-        <TouchableOpacity 
-          style={[styles.featureCard, {backgroundColor: colorScheme === 'dark' ? '#1D3D47' : '#A1CEDC'}]} 
-          onPress={() => navigateTo('/generate')}
+        <TouchableOpacity
+          style={[
+            styles.featureCard,
+            { backgroundColor: colorScheme === "dark" ? "#1D3D47" : "#A1CEDC" },
+          ]}
+          onPress={() => navigateTo("/generate")}
         >
           <ThemedText type="subtitle">Generate Quotes</ThemedText>
           <ThemedText>Create random quotes from various categories</ThemedText>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.featureCard, {backgroundColor: colorScheme === 'dark' ? '#2D3D47' : '#B1CEDC'}]} 
-          onPress={() => navigateTo('/customize')}
+        <TouchableOpacity
+          style={[
+            styles.featureCard,
+            { backgroundColor: colorScheme === "dark" ? "#2D3D47" : "#B1CEDC" },
+          ]}
+          onPress={() => navigateTo("/customize")}
         >
           <ThemedText type="subtitle">Customize Quotes</ThemedText>
           <ThemedText>Create your own quotes with custom images</ThemedText>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.featureCard, {backgroundColor: colorScheme === 'dark' ? '#3D3D47' : '#C1CEDC'}]} 
-          onPress={() => navigateTo('/saved')}
+        <TouchableOpacity
+          style={[
+            styles.featureCard,
+            { backgroundColor: colorScheme === "dark" ? "#3D3D47" : "#C1CEDC" },
+          ]}
+          onPress={() => navigateTo("/saved")}
         >
           <ThemedText type="subtitle">Saved Quotes</ThemedText>
           <ThemedText>View and manage your saved quotes</ThemedText>
@@ -52,8 +58,12 @@ export default function HomeScreen() {
       <ThemedView style={styles.infoContainer}>
         <ThemedText type="subtitle">How to use</ThemedText>
         <ThemedText>1. Generate a random quote or create your own</ThemedText>
-        <ThemedText>2. Customize the quote with different backgrounds</ThemedText>
-        <ThemedText>3. Drag and position the text anywhere on the image</ThemedText>
+        <ThemedText>
+          2. Customize the quote with different backgrounds
+        </ThemedText>
+        <ThemedText>
+          3. Drag and position the text anywhere on the image
+        </ThemedText>
         <ThemedText>4. Save your creation to your device</ThemedText>
       </ThemedView>
     </ScrollView>
@@ -66,7 +76,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 50,
   },
   featuresContainer: {
@@ -77,7 +87,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

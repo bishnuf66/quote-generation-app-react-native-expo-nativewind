@@ -3,8 +3,8 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-
-import { QuotesProvider } from '@/context/QuotesContext';
+import "../global.css"
+import { QuotesProvider } from '../context/QuotesContext';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 

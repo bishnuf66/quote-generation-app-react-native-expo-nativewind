@@ -1,41 +1,51 @@
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import React, { useRef, useState } from "react";
+import {
+  Alert,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Draggable from "react-native-draggable";
+import ViewShot from "react-native-view-shot";
 
-import { StyleSheet, View, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
-import React, { useRef, useState } from 'react';
-import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
-import ViewShot, { ViewShotProperties } from 'react-native-view-shot';
-import Draggable from 'react-native-draggable';
-
-import { ThemedText } from '../components/ThemedText';
-import { ThemedView } from '../components/ThemedView';
-import { useQuotes } from '../context/QuotesContext';
-import { useColorScheme } from '../hooks/useColorScheme';
+import { ThemedText } from "../../components/ThemedText";
+import { ThemedView } from "../../components/ThemedView";
+import { useQuotes } from "../context/QuotesContext";
+import { useColorScheme } from "../hooks/useColorScheme";
 
 const backgroundImages = [
-  'https://source.unsplash.com/random/800x600/?nature',
-  'https://source.unsplash.com/random/800x600/?beach',
-  'https://source.unsplash.com/random/800x600/?mountain',
-  'https://source.unsplash.com/random/800x600/?sunset',
-  'https://source.unsplash.com/random/800x600/?city',
+  "https://source.unsplash.com/random/800x600/?nature",
+  "https://source.unsplash.com/random/800x600/?beach",
+  "https://source.unsplash.com/random/800x600/?mountain",
+  "https://source.unsplash.com/random/800x600/?sunset",
+  "https://source.unsplash.com/random/800x600/?city",
 ];
 
 export default function CustomizeScreen() {
   const { quotes, saveQuote, updateQuotePosition, saveToDevice } = useQuotes();
   const colorScheme = useColorScheme();
   const viewShotRef = useRef<any>(null);
-  
-  const [customText, setCustomText] = useState('');
-  const [customAuthor, setCustomAuthor] = useState('');
+
+  const [customText, setCustomText] = useState("");
+  const [customAuthor, setCustomAuthor] = useState("");
   const [selectedImage, setSelectedImage] = useState(backgroundImages[0]);
   const [isCustomQuote, setIsCustomQuote] = useState(false);
-  const [currentQuote, setCurrentQuote] = useState(quotes.length > 0 ? quotes[quotes.length - 1] : null);
+  const [currentQuote, setCurrentQuote] = useState(
+    quotes.length > 0 ? quotes[quotes.length - 1] : null
+  );
 
   // Handle image selection from gallery
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Please grant permission to access your photos');
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Please grant permission to access your photos"
+      );
       return;
     }
 
@@ -63,10 +73,10 @@ export default function CustomizeScreen() {
     try {
       if (viewShotRef.current) {
         const uri = await viewShotRef.current.capture();
-        
+
         // Save to device
         await saveToDevice(uri);
-        
+
         // Save to app
         if (isCustomQuote) {
           const newQuote = {
@@ -86,12 +96,12 @@ export default function CustomizeScreen() {
           };
           await saveQuote(updatedQuote);
         }
-        
-        Alert.alert('Success', 'Quote saved to your device and app');
+
+        Alert.alert("Success", "Quote saved to your device and app");
       }
     } catch (error) {
-      console.error('Error saving quote:', error);
-      Alert.alert('Error', 'Failed to save quote');
+      console.error("Error saving quote:", error);
+      Alert.alert("Error", "Failed to save quote");
     }
   };
 
@@ -106,7 +116,7 @@ export default function CustomizeScreen() {
         <ThemedText>Customize Quote</ThemedText>
         <TouchableOpacity style={styles.toggleButton} onPress={toggleQuoteMode}>
           <ThemedText style={styles.toggleButtonText}>
-            {isCustomQuote ? 'Use Generated Quote' : 'Create Custom Quote'}
+            {isCustomQuote ? "Use Generated Quote" : "Create Custom Quote"}
           </ThemedText>
         </TouchableOpacity>
       </ThemedView>
@@ -114,17 +124,23 @@ export default function CustomizeScreen() {
       {isCustomQuote ? (
         <ThemedView style={styles.inputContainer}>
           <TextInput
-            style={[styles.textInput, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            style={[
+              styles.textInput,
+              { color: colorScheme === "dark" ? "#fff" : "#000" },
+            ]}
             placeholder="Enter your quote"
-            placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
+            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
             value={customText}
             onChangeText={setCustomText}
             multiline
           />
           <TextInput
-            style={[styles.textInput, { color: colorScheme === 'dark' ? '#fff' : '#000' }]}
+            style={[
+              styles.textInput,
+              { color: colorScheme === "dark" ? "#fff" : "#000" },
+            ]}
             placeholder="Author (optional)"
-            placeholderTextColor={colorScheme === 'dark' ? '#aaa' : '#666'}
+            placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
             value={customAuthor}
             onChangeText={setCustomAuthor}
           />
@@ -137,39 +153,56 @@ export default function CustomizeScreen() {
         </ThemedView>
       ) : (
         <ThemedView style={styles.noQuoteContainer}>
-          <ThemedText>No quote selected. Generate a quote first or create a custom one.</ThemedText>
+          <ThemedText>
+            No quote selected. Generate a quote first or create a custom one.
+          </ThemedText>
         </ThemedView>
       )}
 
       <ThemedView style={styles.imageContainer}>
         <ViewShot ref={viewShotRef} style={styles.viewShot}>
-          <Image source={{ uri: selectedImage }} style={styles.backgroundImage} />
-          
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.backgroundImage}
+          />
+
           {isCustomQuote ? (
             <View style={styles.customTextContainer}>
-              <Draggable x={50} y={50} onDragRelease={(event, gestureState) => {
-                handleDragRelease(gestureState.moveX, gestureState.moveY);
-              }}>
+              <Draggable
+                x={50}
+                y={50}
+                onDragRelease={(event, gestureState) => {
+                  handleDragRelease(gestureState.moveX, gestureState.moveY);
+                }}
+              >
                 <View style={styles.textContainer}>
-                  <ThemedText style={styles.quoteText}>"{customText}"</ThemedText>
+                  <ThemedText style={styles.quoteText}>
+                    "{customText}"
+                  </ThemedText>
                   {customAuthor ? (
-                    <ThemedText style={styles.authorText}>- {customAuthor}</ThemedText>
+                    <ThemedText style={styles.authorText}>
+                      - {customAuthor}
+                    </ThemedText>
                   ) : null}
                 </View>
               </Draggable>
             </View>
           ) : currentQuote ? (
-            <Draggable 
-              x={currentQuote.textPosition?.x || 50} 
+            <Draggable
+              x={currentQuote.textPosition?.x || 50}
               y={currentQuote.textPosition?.y || 50}
               onDragRelease={(event, gestureState) => {
                 handleDragRelease(gestureState.moveX, gestureState.moveY);
               }}
             >
               <View style={styles.textContainer}>
-                <ThemedText style={styles.quoteText}>"{currentQuote.text}"</ThemedText>
+                <ThemedText style={styles.quoteText}>
+                  "{currentQuote.text}"
+                </ThemedText>
                 {currentQuote.author ? (
-                  <ThemedText style={styles.authorText}>- {currentQuote.author}</ThemedText>
+                  <ThemedText style={styles.authorText}>
+                    - {currentQuote.author}
+                  </ThemedText>
                 ) : null}
               </View>
             </Draggable>
@@ -183,10 +216,16 @@ export default function CustomizeScreen() {
           {backgroundImages.map((image, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.backgroundOption, selectedImage === image && styles.selectedBackground]}
+              style={[
+                styles.backgroundOption,
+                selectedImage === image && styles.selectedBackground,
+              ]}
               onPress={() => setSelectedImage(image)}
             >
-              <Image source={{ uri: image }} style={styles.backgroundThumbnail} />
+              <Image
+                source={{ uri: image }}
+                style={styles.backgroundThumbnail}
+              />
             </TouchableOpacity>
           ))}
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
@@ -208,7 +247,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 50,
     marginBottom: 20,
   },
@@ -217,18 +256,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1D3D47',
+    backgroundColor: "#1D3D47",
   },
   toggleButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   inputContainer: {
     marginBottom: 20,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
@@ -236,31 +275,31 @@ const styles = StyleSheet.create({
   },
   quoteInfo: {
     marginBottom: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   quoteInfoText: {
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   noQuoteContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20,
   },
   imageContainer: {
     height: 300,
     marginBottom: 20,
     borderRadius: 10,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   viewShot: {
     flex: 1,
   },
   backgroundImage: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   customTextContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -268,29 +307,29 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 5,
     maxWidth: 250,
   },
   quoteText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
   },
   authorText: {
-    color: 'white',
+    color: "white",
     fontSize: 12,
-    textAlign: 'right',
+    textAlign: "right",
     marginTop: 5,
   },
   backgroundSelector: {
     marginBottom: 20,
   },
   backgroundOptions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 10,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   backgroundOption: {
     width: 60,
@@ -298,37 +337,37 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginBottom: 10,
     borderRadius: 5,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   selectedBackground: {
     borderWidth: 2,
-    borderColor: '#1D3D47',
+    borderColor: "#1D3D47",
   },
   backgroundThumbnail: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   uploadButton: {
     width: 60,
     height: 60,
     borderRadius: 5,
-    backgroundColor: '#ddd',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#ddd",
+    justifyContent: "center",
+    alignItems: "center",
   },
   uploadButtonText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   saveButton: {
-    backgroundColor: '#1D3D47',
+    backgroundColor: "#1D3D47",
     paddingVertical: 15,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 16,
   },
 });
