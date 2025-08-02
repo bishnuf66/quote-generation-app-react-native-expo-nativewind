@@ -1,6 +1,7 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type QuoteType = {
   id: string;
@@ -38,9 +39,51 @@ type QuotesProviderProps = {
   children: ReactNode;
 };
 
+// Key for AsyncStorage
+const SAVED_QUOTES_KEY = '@QuotesApp:savedQuotes';
+
 export const QuotesProvider = ({ children }: QuotesProviderProps) => {
   const [quotes, setQuotes] = useState<QuoteType[]>([]);
   const [savedQuotes, setSavedQuotes] = useState<QuoteType[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load saved quotes from AsyncStorage on initial render
+  useEffect(() => {
+    const loadSavedQuotes = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem(SAVED_QUOTES_KEY);
+        if (jsonValue !== null) {
+          const parsedQuotes = JSON.parse(jsonValue).map((quote: any) => ({
+            ...quote,
+            createdAt: new Date(quote.createdAt)
+          }));
+          setSavedQuotes(parsedQuotes);
+        }
+      } catch (error) {
+        console.error('Error loading saved quotes:', error);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+
+    loadSavedQuotes();
+  }, []);
+
+  // Save to AsyncStorage whenever savedQuotes changes
+  useEffect(() => {
+    if (!isLoaded) return; // Skip initial render
+    
+    const saveQuotes = async () => {
+      try {
+        const jsonValue = JSON.stringify(savedQuotes);
+        await AsyncStorage.setItem(SAVED_QUOTES_KEY, jsonValue);
+      } catch (error) {
+        console.error('Error saving quotes:', error);
+      }
+    };
+
+    saveQuotes();
+  }, [savedQuotes, isLoaded]);
 
   const addQuote = (quoteData: Omit<QuoteType, 'id' | 'createdAt'>): string => {
     const newQuote: QuoteType = {
@@ -59,6 +102,12 @@ export const QuotesProvider = ({ children }: QuotesProviderProps) => {
         ...quote,
         id: Date.now().toString(),
         createdAt: new Date(),
+        // Ensure backgroundImage is properly formatted
+        backgroundImage: quote.backgroundImage?.startsWith('http') 
+          ? quote.backgroundImage 
+          : quote.backgroundImage?.startsWith('file://') 
+            ? quote.backgroundImage 
+            : `https:${quote.backgroundImage}`,
       };
       // Avoid adding duplicates if the user spams the button
       if (prev.some(q => q.text === newQuote.text && q.author === newQuote.author)) {

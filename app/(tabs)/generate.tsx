@@ -232,13 +232,28 @@ export default function GenerateScreen() {
   };
 
   const handleSaveToFavorites = () => {
-    if (quote) {
-      saveQuote({
+    if (quote && backgroundUrl) {
+      // Ensure we have a valid URL (add https:// if missing)
+      let imageUrl = backgroundUrl;
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        imageUrl = `https:${imageUrl}`;
+      }
+      
+      const newQuote = {
+        id: Date.now().toString(),
         text: quote.text,
-        author: quote.author,
-        backgroundImage: backgroundUrl,
-      });
+        author: quote.author || 'Unknown',
+        backgroundImage: imageUrl, // Use the processed URL
+        createdAt: new Date().toISOString(),
+        category: selectedQuoteCategory,
+        imageCategory: selectedImageCategory,
+      };
+      
+      console.log('Saving quote with image URL:', imageUrl); // Debug log
+      saveQuote(newQuote);
       Alert.alert("Success", "Quote saved to favorites!");
+    } else {
+      Alert.alert("Error", "Cannot save quote: Missing quote or background image");
     }
   };
 
