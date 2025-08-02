@@ -60,34 +60,30 @@ export default function GenerateScreen() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(
-        `http://api.quotable.io/random?tags=${category}`
-      );
-      setQuote({
-        text: response.data.content,
-        author: response.data.author,
+      // Fetch quote and image in parallel
+      const quotePromise = axios.get("http://api.quotable.io/random", {
+        params: { tags: category, maxLength: 150 },
       });
-    } catch (err: any) {
-      setError("Failed to fetch quote. Please try again.");
-      // Enhanced Axios error logging
-      if (err.response) {
-        // Server responded but with error status
-        console.log("Response error:", err.response);
-      } else if (err.request) {
-        // Request made, but no response received
-        console.log("Request error:", err.request);
-      } else {
-        // Something else happened
-        console.log("Other error:", err.message);
-      }
-      console.error("Error fetching quote:", err);
+
+      // Fetch a new random image at the same time
+      fetchRandomImage();
+
+      const quoteResponse = await quotePromise;
+
+      setQuote({
+        text: quoteResponse.data.content,
+        author: quoteResponse.data.author,
+      });
+    } catch (e) {
+      setError("Failed to fetch quote. Please check your connection.");
+      console.error("Error fetching quote:", e);
     } finally {
       setLoading(false);
     }
   };
 
   const generateNewQuoteAndImage = (category: Category) => {
-    fetchRandomImage();
+    // fetchQuoteFromServer now handles fetching a new image as well
     fetchQuoteFromServer(category);
   };
 
