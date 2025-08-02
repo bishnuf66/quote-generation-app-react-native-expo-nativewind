@@ -52,7 +52,9 @@ export default function CustomizeScreen() {
 
   // Update state whenever params change
   useEffect(() => {
+    console.log("Customize screen params:", params);
     if (params && (params.text || params.author || params.backgroundImage)) {
+      console.log("Setting up from params - Custom mode");
       setCustomText(params.text ? String(params.text) : "");
       setCustomAuthor(params.author ? String(params.author) : "");
       setSelectedImage(
@@ -67,6 +69,7 @@ export default function CustomizeScreen() {
       const initialY = textPos?.y || IMAGE_HEIGHT / 2 - 40;
       pan.setValue({ x: initialX, y: initialY });
     } else if (quotes.length > 0) {
+      console.log("Setting up from last quote");
       const last = quotes[quotes.length - 1];
       setCustomText(last.text || "");
       setCustomAuthor(last.author || "");
@@ -80,6 +83,7 @@ export default function CustomizeScreen() {
       };
       pan.setValue({ x: savedPos.x, y: savedPos.y });
     } else {
+      console.log("Setting up empty state");
       setCustomText("");
       setCustomAuthor("");
       setSelectedImage("");
@@ -87,7 +91,8 @@ export default function CustomizeScreen() {
       setCurrentQuote(null);
       pan.setValue({ x: IMAGE_WIDTH / 2 - 125, y: IMAGE_HEIGHT / 2 - 40 });
     }
-  }, [params.text, params.author, params.backgroundImage, quotes.length, params, quotes, pan]);
+    console.log("Current state - isCustomQuote:", isCustomQuote, "customText:", customText);
+  }, [params.text, params.author, params.backgroundImage, quotes.length, params, quotes, isCustomQuote, customText, pan]);
 
   // Create PanResponder for drag functionality
   const panResponder = useRef(
@@ -166,7 +171,10 @@ export default function CustomizeScreen() {
       quality: 1,
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
+      console.log("Image selected:", result.assets[0].uri);
       setSelectedImage(result.assets[0].uri);
+    } else {
+      console.log("Image selection cancelled or failed");
     }
   };
 
@@ -273,8 +281,49 @@ export default function CustomizeScreen() {
           />
         </View>
 
-        {/* Quick Instructions */}
+        {/* Mode Toggle and Instructions */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+            <AnimatedButton
+              title={isCustomQuote ? "Custom Mode" : "Edit Mode"}
+              onPress={() => setIsCustomQuote(!isCustomQuote)}
+              gradientColors={isCustomQuote ? ["#667eea", "#764ba2"] : ["#f093fb", "#f5576c"]}
+              size="small"
+              icon={
+                <AnimatedIcon
+                  name={isCustomQuote ? "edit" : "plus"}
+                  size={14}
+                  color="white"
+                  library="FontAwesome"
+                />
+              }
+              style={{ flex: 1, marginRight: 8 }}
+            />
+
+            <AnimatedButton
+              title="Clear All"
+              onPress={() => {
+                setCustomText("");
+                setCustomAuthor("");
+                setSelectedImage("");
+                setCurrentQuote(null);
+                resetPosition();
+              }}
+              gradientColors={["#ff7e5f", "#feb47b"]}
+              size="small"
+              variant="outline"
+              icon={
+                <AnimatedIcon
+                  name="trash"
+                  size={14}
+                  color="white"
+                  library="FontAwesome"
+                />
+              }
+              style={{ flex: 1, marginLeft: 8 }}
+            />
+          </View>
+
           <GlassCard
             style={{ padding: 16, borderRadius: 12 }}
             backgroundColor={colorScheme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.05)"}
@@ -288,131 +337,94 @@ export default function CustomizeScreen() {
               />
               <View style={{ marginLeft: 12, flex: 1 }}>
                 <ThemedText style={{ fontWeight: '600', marginBottom: 4 }}>
-                  How to customize:
+                  {isCustomQuote ? "Custom Mode:" : "Edit Mode:"}
                 </ThemedText>
                 <ThemedText style={{ fontSize: 14, opacity: 0.8, lineHeight: 20 }}>
-                  1. Enter your quote and author{'\n'}
-                  2. Select a background image{'\n'}
-                  3. Drag the quote to position it perfectly
+                  {isCustomQuote
+                    ? "1. Enter your quote and author\n2. Select a background image\n3. Drag the quote to position it perfectly"
+                    : "1. Modify the existing quote\n2. Change the background image\n3. Reposition the text as needed"
+                  }
                 </ThemedText>
               </View>
             </View>
           </GlassCard>
         </View>
 
-        {isCustomQuote ? (
-          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-            <GlassCard
-              style={{ padding: 20, borderRadius: 16, marginBottom: 16 }}
-              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <AnimatedIcon
-                  name="quote-left"
-                  size={16}
-                  color="#667eea"
-                  library="FontAwesome"
-                />
-                <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
-                  Your Quote
-                </ThemedText>
-              </View>
-              <TextInput
-                style={[
-                  {
-                    color: colorScheme === "dark" ? "#fff" : "#000",
-                    fontSize: 16,
-                    minHeight: 80,
-                    textAlignVertical: 'top',
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-                    borderRadius: 12,
-                    padding: 12,
-                  }
-                ]}
-                placeholder="Enter your inspirational quote..."
-                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-                value={customText}
-                onChangeText={setCustomText}
-                multiline
+        {/* Always Show Input Fields */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+          <GlassCard
+            style={{ padding: 20, borderRadius: 16, marginBottom: 16 }}
+            backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <AnimatedIcon
+                name="quote-left"
+                size={16}
+                color="#667eea"
+                library="FontAwesome"
               />
-            </GlassCard>
+              <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
+                {isCustomQuote ? "Your Quote" : "Edit Quote"}
+              </ThemedText>
+            </View>
+            <TextInput
+              style={[
+                {
+                  color: colorScheme === "dark" ? "#fff" : "#000",
+                  fontSize: 16,
+                  minHeight: 80,
+                  textAlignVertical: 'top',
+                  backgroundColor: 'transparent',
+                  borderWidth: 1,
+                  borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                  borderRadius: 12,
+                  padding: 12,
+                }
+              ]}
+              placeholder={isCustomQuote ? "Enter your inspirational quote..." : "Edit the quote text..."}
+              placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+              value={customText}
+              onChangeText={setCustomText}
+              multiline
+              editable={true}
+            />
+          </GlassCard>
 
-            <GlassCard
-              style={{ padding: 20, borderRadius: 16 }}
-              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <AnimatedIcon
-                  name="user"
-                  size={16}
-                  color="#667eea"
-                  library="FontAwesome"
-                />
-                <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
-                  Author
-                </ThemedText>
-              </View>
-              <TextInput
-                style={[
-                  {
-                    color: colorScheme === "dark" ? "#fff" : "#000",
-                    fontSize: 16,
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
-                    borderRadius: 12,
-                    padding: 12,
-                  }
-                ]}
-                placeholder="Author name (optional)"
-                placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
-                value={customAuthor}
-                onChangeText={setCustomAuthor}
+          <GlassCard
+            style={{ padding: 20, borderRadius: 16 }}
+            backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <AnimatedIcon
+                name="user"
+                size={16}
+                color="#667eea"
+                library="FontAwesome"
               />
-            </GlassCard>
-          </View>
-        ) : currentQuote ? (
-          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-            <GlassCard
-              style={{ padding: 16, borderRadius: 12 }}
-              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <AnimatedIcon
-                  name="info-circle"
-                  size={16}
-                  color="#667eea"
-                  library="FontAwesome"
-                />
-                <ThemedText style={{ marginLeft: 8, fontStyle: 'italic' }}>
-                  Drag the quote text to position it on the image
-                </ThemedText>
-              </View>
-            </GlassCard>
-          </View>
-        ) : (
-          <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-            <GlassCard
-              style={{ padding: 20, borderRadius: 12 }}
-              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
-            >
-              <View style={{ alignItems: 'center' }}>
-                <AnimatedIcon
-                  name="exclamation-triangle"
-                  size={24}
-                  color="#f093fb"
-                  animationType="pulse"
-                  library="FontAwesome"
-                />
-                <ThemedText style={{ marginTop: 8, textAlign: 'center' }}>
-                  No quote selected. Generate a quote first or create a custom one above.
-                </ThemedText>
-              </View>
-            </GlassCard>
-          </View>
-        )}
+              <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
+                Author
+              </ThemedText>
+            </View>
+            <TextInput
+              style={[
+                {
+                  color: colorScheme === "dark" ? "#fff" : "#000",
+                  fontSize: 16,
+                  backgroundColor: 'transparent',
+                  borderWidth: 1,
+                  borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                  borderRadius: 12,
+                  padding: 12,
+                }
+              ]}
+              placeholder="Author name (optional)"
+              placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
+              value={customAuthor}
+              onChangeText={setCustomAuthor}
+              editable={true}
+            />
+          </GlassCard>
+        </View>
 
         {/* Enhanced Image Container */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>

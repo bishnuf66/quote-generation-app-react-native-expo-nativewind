@@ -697,6 +697,7 @@ export default function GenerateScreen() {
               />
 
               <AnimatedButton
+  
                 title="Customize"
                 onPress={handleCustomize}
                 gradientColors={commonGradients.secondary}

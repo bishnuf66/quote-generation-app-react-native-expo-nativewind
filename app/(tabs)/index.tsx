@@ -312,7 +312,7 @@ export default function HomeScreen() {
             <View className="flex-row items-start">
               <View className="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3" />
               <ThemedText className="flex-1 opacity-80 leading-5">
-                MUltilpe Catgeory of quotes generation
+                Multilpe Catgeory of quotes generation
               </ThemedText>
             </View>
             <View className="flex-row items-start">
