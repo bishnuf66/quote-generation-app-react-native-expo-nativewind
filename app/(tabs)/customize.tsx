@@ -9,7 +9,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ScrollView,
 } from "react-native";
 import Draggable from "react-native-draggable";
 import ViewShot from "react-native-view-shot";
@@ -25,21 +24,25 @@ export default function CustomizeScreen() {
   const viewShotRef = useRef<any>(null);
   const params = useLocalSearchParams();
 
-  // State for quote, author, image
+  // State for quote, author, image, and draggable position
   const [customText, setCustomText] = useState("");
   const [customAuthor, setCustomAuthor] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   const [isCustomQuote, setIsCustomQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(null);
-
-  // On mount, check for params and prefill state
+  const [dragPos, setDragPos] = useState({ x: 50, y: 50 });
+  const [loadingQuote, setLoadingQuote] = useState(false);
+  // Update state whenever params change (for navigation from saved or generate tab)
   useEffect(() => {
     if (params && (params.text || params.author || params.backgroundImage)) {
       setCustomText(params.text ? String(params.text) : "");
       setCustomAuthor(params.author ? String(params.author) : "");
-      setSelectedImage(params.backgroundImage ? String(params.backgroundImage) : "");
+      setSelectedImage(
+        params.backgroundImage ? String(params.backgroundImage) : ""
+      );
       setIsCustomQuote(true); // Open in edit mode
       setCurrentQuote(null); // Not using context quote
+      setDragPos({ x: 50, y: 50 });
     } else if (quotes.length > 0) {
       // Fallback to last quote in context
       const last = quotes[quotes.length - 1];
@@ -48,19 +51,20 @@ export default function CustomizeScreen() {
       setSelectedImage(last.backgroundImage || "");
       setIsCustomQuote(true);
       setCurrentQuote(last);
+      setDragPos(last.textPosition || { x: 50, y: 50 });
     } else {
       setCustomText("");
       setCustomAuthor("");
       setSelectedImage("");
       setIsCustomQuote(true);
       setCurrentQuote(null);
+      setDragPos({ x: 50, y: 50 });
     }
-  }, [params, quotes]);
+  }, [params.text, params.author, params.backgroundImage, quotes.length]);
 
   // Handle image selection from gallery
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
     if (status !== "granted") {
       Alert.alert(
         "Permission needed",
@@ -68,23 +72,28 @@ export default function CustomizeScreen() {
       );
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setSelectedImage(result.assets[0].uri);
     }
   };
 
   // Handle text position update
-  const handleDragRelease = (x: number, y: number) => {
+  const handleDragRelease = (e, gestureState) => {
+    setDragPos({
+      x: gestureState.moveX || dragPos.x,
+      y: gestureState.moveY || dragPos.y,
+    });
     if (currentQuote) {
-      updateQuotePosition(currentQuote.id, { x, y });
+      updateQuotePosition(currentQuote.id, {
+        x: gestureState.moveX,
+        y: gestureState.moveY,
+      });
     }
   };
 
@@ -110,7 +119,7 @@ export default function CustomizeScreen() {
         author: customAuthor,
         backgroundImage: selectedImage,
         createdAt: new Date().toISOString(),
-        textPosition: { x: 50, y: 50 },
+        textPosition: dragPos,
       };
       try {
         await saveQuote(newQuote);
@@ -123,21 +132,11 @@ export default function CustomizeScreen() {
     }
   };
 
-  // Toggle between custom quote and generated quote
-  const toggleQuoteMode = () => {
-    setIsCustomQuote(!isCustomQuote);
-  };
-
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      <View contentContainerStyle={{ paddingBottom: 40 }}>
         <ThemedView style={styles.header}>
           <ThemedText>Customize Quote</ThemedText>
-          <TouchableOpacity style={styles.toggleButton} onPress={toggleQuoteMode}>
-            <ThemedText style={styles.toggleButtonText}>
-              {isCustomQuote ? "Use Generated Quote" : "Create Custom Quote"}
-            </ThemedText>
-          </TouchableOpacity>
         </ThemedView>
 
         {isCustomQuote ? (
@@ -186,21 +185,22 @@ export default function CustomizeScreen() {
                 style={styles.backgroundImage}
               />
             ) : (
-              <View style={[styles.backgroundImage, { backgroundColor: 'transparent' }]} />
+              <View
+                style={[
+                  styles.backgroundImage,
+                  { backgroundColor: "transparent" },
+                ]}
+              />
             )}
-
-            {/* Always show editable draggable text for custom or loaded quote */}
             <View style={styles.customTextContainer}>
               <Draggable
-                x={50}
-                y={50}
-                onDragRelease={(event, gestureState) => {
-                  handleDragRelease(gestureState.moveX, gestureState.moveY);
-                }}
+                x={dragPos.x}
+                y={dragPos.y}
+                onDragRelease={handleDragRelease}
               >
                 <View style={styles.textContainer}>
                   <ThemedText style={styles.quoteText}>
-                    "{customText}"
+                    &quot;{customText}&quot;
                   </ThemedText>
                   {customAuthor ? (
                     <ThemedText style={styles.authorText}>
@@ -213,30 +213,36 @@ export default function CustomizeScreen() {
           </ViewShot>
         </ThemedView>
 
-        <View style={{ alignItems: 'center', marginBottom: 20 }}>
+        <View style={{ alignItems: "center", marginBottom: 20 }}>
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
             <ThemedText style={styles.uploadButtonText}>+</ThemedText>
           </TouchableOpacity>
-          <ThemedText style={{ marginTop: 8 }}>Select Image from Gallery</ThemedText>
+          <ThemedText style={{ marginTop: 8 }}>
+            Select Image from Gallery
+          </ThemedText>
         </View>
 
         <View className="flex-row justify-around mt-5">
-            <TouchableOpacity
-              className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
-              onPress={handleAddToFavorites}
-            >
-              <FontAwesome name="heart" size={16} color="white" />
-              <ThemedText className="text-white font-bold ml-2">Add to Favorites</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
-              onPress={handleSaveToDevice}
-            >
-              <FontAwesome name="save" size={16} color="white" />
-              <ThemedText className="text-white font-bold ml-2">Save to Device</ThemedText>
-            </TouchableOpacity>
-          </View>
-      </ScrollView>
+          <TouchableOpacity
+            className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
+            onPress={handleAddToFavorites}
+          >
+            <FontAwesome name="heart" size={16} color="white" />
+            <ThemedText className="text-white font-bold ml-2">
+              Add to Favorites
+            </ThemedText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
+            onPress={handleSaveToDevice}
+          >
+            <FontAwesome name="save" size={16} color="white" />
+            <ThemedText className="text-white font-bold ml-2">
+              Save to Device
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+      </View>
     </ThemedView>
   );
 }
