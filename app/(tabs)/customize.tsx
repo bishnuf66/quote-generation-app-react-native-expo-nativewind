@@ -11,10 +11,10 @@ import {
 import Draggable from "react-native-draggable";
 import ViewShot from "react-native-view-shot";
 
-import { ThemedText } from "../../components/ThemedText";
-import { ThemedView } from "../../components/ThemedView";
-import { useQuotes } from "../../context/QuotesContext";
-import { useColorScheme } from "../hooks/useColorScheme";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useQuotes } from "@/context/QuotesContext";
+import { useColorScheme } from "@/hooks/useColorScheme";
 
 const backgroundImages = [
   "https://source.unsplash.com/random/800x600/?nature",

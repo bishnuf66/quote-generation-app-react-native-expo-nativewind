@@ -7,7 +7,7 @@ import { Image } from "expo-image";
 
 // import { ThemedText } from "../components/ThemedText";
 // import { ThemedView } from "../components/ThemedView";
-import { useQuotes } from "../context/QuotesContext";
+import { useQuotes } from "@/context/QuotesContext";
 import { useColorScheme } from "../hooks/useColorScheme";
 
 type Category =
@@ -83,11 +83,9 @@ export default function GenerateScreen() {
   const handleSaveQuote = () => {
     if (quote) {
       addQuote({
-        id: Date.now().toString(),
         text: quote.text,
         author: quote.author,
         backgroundImage: "https://source.unsplash.com/random/800x600/?nature",
-        createdAt: new Date(),
       });
       router.push("/customize");
     }

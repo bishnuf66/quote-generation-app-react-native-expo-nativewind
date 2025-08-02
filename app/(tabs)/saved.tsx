@@ -8,9 +8,9 @@ import {
   View,
 } from "react-native";
 
-import { ThemedText } from "../../components/ThemedText";
-import { ThemedView } from "../../components/ThemedView";
-import { useQuotes } from "../../context/QuotesContext";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useQuotes } from "@/context/QuotesContext";
 
 export default function SavedScreen() {
   const router = useRouter();
