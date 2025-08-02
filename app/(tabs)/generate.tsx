@@ -119,9 +119,8 @@ export default function GenerateScreen() {
     },
   ];
 
-  // Use Expo's Constants.manifest.extra for environment variables
-  const PEXELS_API_KEY =
-    "BtZxhO8KoxJnYW98pyeIV41T1f3oreY1sbMJHmKFXnkgz0mb1w7Vi6Zh";
+  // Load Pexels API key from environment variables
+  const PEXELS_API_KEY = process.env.EXPO_PUBLIC_PEXELS_API_KEY;
   console.log(
     "Using Pexels API key:",
     PEXELS_API_KEY ? "Key found" : "Key missing!"
@@ -188,7 +187,7 @@ export default function GenerateScreen() {
     } finally {
       setImageLoading(false);
     }
-  }, [selectedImageCategory]);
+  }, [PEXELS_API_KEY, imageCategories, selectedImageCategory]);
 
   const fetchQuoteFromServer = async (category: QuoteCategory) => {
     setLoading(true);
@@ -228,7 +227,7 @@ export default function GenerateScreen() {
       }
     };
     init();
-  }, [selectedQuoteCategory, selectedImageCategory, generateNewQuoteAndImage, fetchRandomImage, backgroundUrl]);
+  }, [selectedQuoteCategory, selectedImageCategory, generateNewQuoteAndImage]);
 
   useEffect(() => {
     // Entrance animation
