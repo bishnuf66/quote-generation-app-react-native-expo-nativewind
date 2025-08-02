@@ -19,7 +19,6 @@
     "ios": {
       "supportsTablet": true
     },
-
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -39,6 +38,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "cf321c09-0403-4033-bc8e-3cb2eeffa361"
+      }
+    },
+    "owner": "bishnuf66"
   }
 }
