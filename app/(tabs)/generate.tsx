@@ -1,13 +1,12 @@
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  GestureResponderEvent,
-  SafeAreaView,
+  Image,
+  NativeSyntheticEvent,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -61,7 +60,9 @@ export default function GenerateScreen() {
   const [quote, setQuote] = useState<{ text: string; author: string } | null>(
     null
   );
-  const [backgroundUrl, setBackgroundUrl] = useState<string>("");
+  const [backgroundUrl, setBackgroundUrl] = useState<string>(
+    "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedQuoteCategory, setSelectedQuoteCategory] =
@@ -111,6 +112,10 @@ export default function GenerateScreen() {
   // Use Expo's Constants.manifest.extra for environment variables
   const PEXELS_API_KEY =
     "BtZxhO8KoxJnYW98pyeIV41T1f3oreY1sbMJHmKFXnkgz0mb1w7Vi6Zh";
+  console.log(
+    "Using Pexels API key:",
+    PEXELS_API_KEY ? "Key found" : "Key missing!"
+  );
 
   const fetchRandomImage = async (
     categoryId: string = selectedImageCategory
@@ -122,9 +127,12 @@ export default function GenerateScreen() {
         query = category.query;
       }
 
+      console.log("Fetching image with query:", query);
+
       // Get a random page (Pexels returns 15 results per page, we'll use first 5 pages for variety)
       const randomPage = Math.floor(Math.random() * 5) + 1;
 
+      console.log("Making API request to Pexels...");
       const response = await axios.get("https://api.pexels.com/v1/search", {
         params: {
           query,
@@ -137,6 +145,8 @@ export default function GenerateScreen() {
         },
       });
 
+      console.log("Pexels API response status:", response.status);
+
       if (
         response.data &&
         response.data.photos &&
@@ -147,6 +157,8 @@ export default function GenerateScreen() {
           Math.random() * response.data.photos.length
         );
         const photo: PexelsPhoto = response.data.photos[randomIndex];
+
+        console.log("Selected photo URL:", photo.src.large);
 
         // Use the large image URL (you can also use photo.src.medium or other sizes)
         setBackgroundUrl(photo.src.large);
@@ -169,13 +181,10 @@ export default function GenerateScreen() {
     setLoading(true);
     setError(null);
     try {
-      // Fetch quote first
+      // Fetch quote only
       const quoteResponse = await axios.get("http://api.quotable.io/random", {
         params: { tags: category, maxLength: 150 },
       });
-
-      // Then fetch a new random image
-      await fetchRandomImage(selectedImageCategory);
 
       setQuote({
         text: quoteResponse.data.content,
@@ -193,7 +202,7 @@ export default function GenerateScreen() {
     fetchQuoteFromServer(category);
   };
 
-  const handleNewBackground = (_event: GestureResponderEvent) => {
+  const handleNewBackground = () => {
     fetchRandomImage(selectedImageCategory);
   };
 
@@ -202,7 +211,7 @@ export default function GenerateScreen() {
       await generateNewQuoteAndImage(selectedQuoteCategory);
       // Ensure we have a background image
       if (!backgroundUrl) {
-        await fetchRandomImage(selectedImageCategory);
+        await fetchRandomImage(selectedImageCategory).catch(console.error);
       }
     };
     init();
@@ -212,14 +221,12 @@ export default function GenerateScreen() {
     setSelectedQuoteCategory(category);
   };
 
-
-
   // Wrapper function for the onPress handler
   const handleImageCategoryPress = (categoryId: string) => {
-    return (_event: GestureResponderEvent) => {
+    return () => {
       setSelectedImageCategory(categoryId);
-      fetchRandomImage(categoryId).catch(error => {
-        console.error('Error fetching image:', error);
+      fetchRandomImage(categoryId).catch((error) => {
+        console.error("Error fetching image:", error);
       });
     };
   };
@@ -258,29 +265,71 @@ export default function GenerateScreen() {
     }
   };
 
+  console.log("Current background URL:", backgroundUrl);
+
   return (
-    <SafeAreaView className="flex-1 bg-black">
-      {backgroundUrl ? (
+    <View className="flex-1 bg-black">
+      {/* Background Image */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "black",
+        }}
+      >
         <Image
           source={{ uri: backgroundUrl }}
-          className="absolute top-0 left-0 w-full h-full"
-          contentFit="cover"
+          style={{
+            flex: 1,
+            width: "100%",
+            height: "100%",
+          }}
+          resizeMode="cover"
+          onError={(e: NativeSyntheticEvent<{ error: any }>) => {
+            console.log("Image loading error:", e.nativeEvent.error);
+            console.log("Failed URL:", backgroundUrl);
+            // Fallback to a default image
+            setBackgroundUrl(
+              "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
+            );
+          }}
+          onLoad={() => console.log("Image loaded successfully")}
         />
-      ) : null}
-      <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/70" />
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      </View>
+
+      {/* Dark Overlay */}
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.6)",
+          zIndex: 1,
+        }}
+        pointerEvents="none"
+      />
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 40,
+          flexGrow: 1,
+          zIndex: 2,
+        }}
+        style={{
+          flex: 1,
+          zIndex: 2,
+        }}
+      >
         <View className="items-center pt-8 pb-4">
           <Text className="text-3xl font-bold text-white drop-shadow-lg mb-1">
             Generate Quotes
           </Text>
-          <Text className="text-base text-white/80">
-            Select a category and generate random quotes
-          </Text>
         </View>
         <View className="px-5 pb-2">
-          <Text className="text-lg font-semibold text-white mb-2">
-            Categories
-          </Text>
           <View className="mb-4">
             <Text className="text-white font-medium mb-2 ml-1">
               Quote Categories
@@ -307,7 +356,13 @@ export default function GenerateScreen() {
 
             <View className="flex-row justify-between items-center mb-2 px-1">
               <Text className="text-white font-medium">Backgrounds</Text>
-              <TouchableOpacity onPress={handleNewBackground} className="p-1">
+              <TouchableOpacity
+                onPress={() => {
+                  handleNewBackground();
+                  generateNewQuoteAndImage(selectedQuoteCategory);
+                }}
+                className="p-1"
+              >
                 <FontAwesome name="refresh" size={16} color="#06b6d4" />
               </TouchableOpacity>
             </View>
@@ -347,11 +402,20 @@ export default function GenerateScreen() {
           options={{ fileName: "quote", format: "jpg", quality: 0.9 }}
         >
           <View className="mx-5 mt-6 rounded-2xl bg-black/60 items-center justify-center min-h-[220px] shadow-lg overflow-hidden">
-            <Image
-              source={{ uri: backgroundUrl }}
-              className="absolute top-0 left-0 w-full h-full"
-              contentFit="cover"
-            />
+            <View className="absolute inset-0">
+              <Image
+                source={{ uri: backgroundUrl }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  resizeMode: "cover",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
+              />
+            </View>
             <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 p-4 justify-center items-center" />
             {loading ? (
               <ActivityIndicator size="large" color="#A1CEDC" />
@@ -360,7 +424,9 @@ export default function GenerateScreen() {
                 <Text className="text-red-400 text-center mb-2">{error}</Text>
                 <TouchableOpacity
                   className="bg-cyan-700 px-4 py-2 rounded-lg"
-                  onPress={() => generateNewQuoteAndImage(selectedCategory)}
+                  onPress={() =>
+                    generateNewQuoteAndImage(selectedQuoteCategory)
+                  }
                 >
                   <Text className="text-white font-bold">Try Again</Text>
                 </TouchableOpacity>
@@ -381,14 +447,14 @@ export default function GenerateScreen() {
           <View className="flex-row justify-around flex-wrap">
             <TouchableOpacity
               className="bg-white/10 px-4 py-3 rounded-lg border border-cyan-700 mb-3 flex-row items-center"
-              onPress={() => fetchQuoteFromServer(selectedCategory)}
+              onPress={() => fetchQuoteFromServer(selectedQuoteCategory)}
             >
               <FontAwesome name="quote-left" size={16} color="#67e8f9" />
               <Text className="text-cyan-300 font-bold ml-2">New Quote</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="bg-white/10 px-4 py-3 rounded-lg border border-cyan-700 mb-3 flex-row items-center"
-              onPress={fetchRandomImage}
+              onPress={() => fetchRandomImage(selectedImageCategory)}
             >
               <FontAwesome name="image" size={16} color="#67e8f9" />
               <Text className="text-cyan-300 font-bold ml-2">New Image</Text>
@@ -419,6 +485,6 @@ export default function GenerateScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
