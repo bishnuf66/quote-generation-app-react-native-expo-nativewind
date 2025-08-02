@@ -20,7 +20,7 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
@@ -78,7 +78,7 @@ export default function FavoritesScreen() {
         }),
       ]),
     ]).start();
-  }, []);
+  }, [fadeAnim, headerAnim, slideAnim]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -314,7 +314,7 @@ export default function FavoritesScreen() {
     }
   };
 
-  const renderActionButton = (
+  const renderActionButton = React.useCallback((
     onPress: () => void,
     icon: string,
     color: string,
@@ -322,38 +322,9 @@ export default function FavoritesScreen() {
     library: 'FontAwesome' | 'Ionicons' = 'Ionicons',
     size: number = 16
   ) => {
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-
-    const handlePressIn = () => {
-      Animated.spring(scaleAnim, {
-        toValue: 0.95,
-        useNativeDriver: true,
-      }).start();
-    };
-
-    const handlePressOut = () => {
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 100,
-        friction: 8,
-        useNativeDriver: true,
-      }).start();
-    };
-
     return (
-      <Animated.View
-        style={{
-          flex: 1,
-          marginHorizontal: 2,
-          transform: [{ scale: scaleAnim }],
-        }}
-      >
-        <TouchableOpacity
-          onPress={onPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          activeOpacity={1}
-        >
+      <View style={{ flex: 1, marginHorizontal: 2 }}>
+        <TouchableOpacity onPress={onPress}>
           <LinearGradient
             colors={gradientColors}
             start={{ x: 0, y: 0 }}
@@ -371,13 +342,13 @@ export default function FavoritesScreen() {
               size={size}
               color={color}
               library={library}
-              animationType="pulse"
+              animationType="none"
             />
           </LinearGradient>
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     );
-  };
+  }, []);
 
   if (savedQuotes.length === 0) {
     return (
@@ -415,7 +386,7 @@ export default function FavoritesScreen() {
             </ThemedText>
 
             <ThemedText className={`text-center ${secondaryText} mb-8 max-w-sm leading-6 text-lg`}>
-              Save your favorite quotes and they'll appear here as beautiful, shareable cards
+              Save your favorite quotes and they&apos;ll appear here as beautiful, shareable cards
             </ThemedText>
 
             <View className="space-y-4 w-full max-w-xs">
@@ -548,31 +519,14 @@ export default function FavoritesScreen() {
           }}
         >
           {savedQuotes.map((quote, index) => {
-            const cardAnim = useRef(new Animated.Value(0)).current;
-
-            React.useEffect(() => {
-              Animated.timing(cardAnim, {
-                toValue: 1,
-                duration: 600,
-                delay: index * 100,
-                useNativeDriver: true,
-              }).start();
-            }, [cardAnim, index]);
 
             return (
-              <Animated.View
+              <View
                 key={quote.id}
                 className="mb-4"
                 style={{
                   width: CARD_WIDTH,
                   marginHorizontal: CARD_GAP / 2,
-                  opacity: cardAnim,
-                  transform: [{
-                    translateY: cardAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [20, 0],
-                    })
-                  }],
                 }}
               >
                 <GradientCard
@@ -767,7 +721,7 @@ export default function FavoritesScreen() {
                     </View>
                   </View>
                 </GradientCard>
-              </Animated.View>
+              </View>
             );
           })}
         </Animated.View>

@@ -244,7 +244,7 @@ export default function GenerateScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+  }, [fadeAnim, slideAnim]); // Run only once on mount
 
   const handleQuoteCategorySelect = (category: QuoteCategory) => {
     setSelectedQuoteCategory(category);
@@ -260,7 +260,7 @@ export default function GenerateScreen() {
     };
   };
 
-  const handleSaveToFavorites = () => {
+  const handleSaveToFavorites = async () => {
     if (quote && backgroundUrl) {
       // Ensure we have a valid URL (add https:// if missing)
       let imageUrl = backgroundUrl;
@@ -269,18 +269,21 @@ export default function GenerateScreen() {
       }
 
       const newQuote = {
-        id: Date.now().toString(),
         text: quote.text,
         author: quote.author || "Unknown",
-        backgroundImage: imageUrl, // Use the processed URL
-        createdAt: new Date().toISOString(),
+        backgroundImage: imageUrl,
         category: selectedQuoteCategory,
         imageCategory: selectedImageCategory,
       };
 
-      console.log("Saving quote with image URL:", imageUrl); // Debug log
-      saveQuote(newQuote);
-      Alert.alert("Success", "Quote saved to favorites!");
+      try {
+        console.log("Saving quote with image URL:", imageUrl); // Debug log
+        await saveQuote(newQuote);
+        Alert.alert("Success", "Quote saved to favorites!");
+      } catch (error) {
+        console.error("Error saving quote:", error);
+        Alert.alert("Error", "Failed to save quote to favorites.");
+      }
     } else {
       Alert.alert(
         "Error",
@@ -297,7 +300,11 @@ export default function GenerateScreen() {
       }
 
       console.log("Attempting to capture quote card...");
-      const uri = await viewShotRef.current?.capture?.();
+      if (!viewShotRef.current) {
+        Alert.alert("Error", "Unable to capture quote image.");
+        return;
+      }
+      const uri = await viewShotRef.current.capture();
       if (uri) {
         console.log("Captured successfully:", uri);
         await saveToDevice(uri);

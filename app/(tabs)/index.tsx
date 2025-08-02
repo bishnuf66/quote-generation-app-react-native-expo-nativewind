@@ -76,7 +76,7 @@ export default function HomeScreen() {
         useNativeDriver: true,
       })
     ).start();
-  }, [fadeAnim, rotateAnim, scaleAnim1, scaleAnim2, scaleAnim3, slideAnim]);
+  }, [fadeAnim, rotateAnim, scaleAnim1, scaleAnim2, scaleAnim3, slideAnim]); // Run only once on mount
 
   const navigateTo = (screen: string) => {
     router.push(screen);

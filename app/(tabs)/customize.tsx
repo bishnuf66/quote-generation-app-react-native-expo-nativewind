@@ -31,7 +31,7 @@ const IMAGE_WIDTH = screenWidth - 40; // Accounting for padding
 export default function CustomizeScreen() {
   const { quotes, saveQuote, updateQuotePosition, saveToDevice } = useQuotes();
   const colorScheme = useColorScheme();
-  const viewShotRef = useRef(null);
+  const viewShotRef = useRef<ViewShot>(null);
   const params = useLocalSearchParams();
 
   // State for quote, author, image, and draggable position
@@ -62,8 +62,9 @@ export default function CustomizeScreen() {
       setCurrentQuote(null);
 
       // Set initial position from params or center
-      const initialX = params.textPosition?.x || IMAGE_WIDTH / 2 - 125;
-      const initialY = params.textPosition?.y || IMAGE_HEIGHT / 2 - 40;
+      const textPos = params.textPosition as any;
+      const initialX = textPos?.x || IMAGE_WIDTH / 2 - 125;
+      const initialY = textPos?.y || IMAGE_HEIGHT / 2 - 40;
       pan.setValue({ x: initialX, y: initialY });
     } else if (quotes.length > 0) {
       const last = quotes[quotes.length - 1];
@@ -100,9 +101,11 @@ export default function CustomizeScreen() {
           useNativeDriver: false,
         }).start();
 
+        const panX = pan.x as any;
+        const panY = pan.y as any;
         pan.setOffset({
-          x: pan.x._value,
-          y: pan.y._value,
+          x: panX._value || 0,
+          y: panY._value || 0,
         });
       },
       onPanResponderMove: (evt, gestureState) => {
@@ -111,10 +114,12 @@ export default function CustomizeScreen() {
         const newY = gestureState.dy;
 
         // Apply constraints to keep text within image bounds
-        const minX = -pan.x._offset;
-        const maxX = IMAGE_WIDTH - textDimensions.width - pan.x._offset;
-        const minY = -pan.y._offset;
-        const maxY = IMAGE_HEIGHT - textDimensions.height - pan.y._offset;
+        const panX = pan.x as any;
+        const panY = pan.y as any;
+        const minX = -(panX._offset || 0);
+        const maxX = IMAGE_WIDTH - textDimensions.width - (panX._offset || 0);
+        const minY = -(panY._offset || 0);
+        const maxY = IMAGE_HEIGHT - textDimensions.height - (panY._offset || 0);
 
         const constrainedX = Math.max(minX, Math.min(maxX, newX));
         const constrainedY = Math.max(minY, Math.min(maxY, newY));
@@ -133,9 +138,11 @@ export default function CustomizeScreen() {
 
         // Update position in context if we have a current quote
         if (currentQuote) {
+          const panX = pan.x as any;
+          const panY = pan.y as any;
           updateQuotePosition(currentQuote.id, {
-            x: pan.x._value,
-            y: pan.y._value,
+            x: panX._value || 0,
+            y: panY._value || 0,
           });
         }
       },
@@ -164,7 +171,7 @@ export default function CustomizeScreen() {
   };
 
   // Handle text layout to get dimensions for boundary calculations
-  const onTextLayout = (event) => {
+  const onTextLayout = (event: any) => {
     const { width, height } = event.nativeEvent.layout;
     setTextDimensions({ width: width + 16, height: height + 16 }); // Add padding
   };
@@ -172,10 +179,12 @@ export default function CustomizeScreen() {
   // Save the customized quote
   const handleSaveToDevice = async () => {
     try {
-      const uri = await viewShotRef.current?.capture?.();
-      if (uri) {
-        await saveToDevice(uri);
-        Alert.alert("Success", "Quote saved to device!");
+      if (viewShotRef.current) {
+        const uri = await viewShotRef.current.capture();
+        if (uri) {
+          await saveToDevice(uri);
+          Alert.alert("Success", "Quote saved to device!");
+        }
       }
     } catch (error) {
       Alert.alert("Error", "Failed to save quote to device.");
@@ -190,7 +199,7 @@ export default function CustomizeScreen() {
         author: customAuthor,
         backgroundImage: selectedImage,
         createdAt: new Date().toISOString(),
-        textPosition: { x: pan.x._value, y: pan.y._value },
+        textPosition: { x: (pan.x as any)._value || 0, y: (pan.y as any)._value || 0 },
       };
       try {
         await saveQuote(newQuote);
@@ -447,7 +456,7 @@ export default function CustomizeScreen() {
                     opacity: 0.7,
                     textAlign: "center"
                   }}>
-                    Tap "Select Image" to add background
+                    Tap &quot;Select Image&quot; to add background
                   </ThemedText>
                   <ThemedText style={{
                     fontSize: 14,
