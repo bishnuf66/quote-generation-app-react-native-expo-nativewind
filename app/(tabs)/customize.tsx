@@ -1,6 +1,8 @@
+import { FontAwesome } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import React, { useRef, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   StyleSheet,
@@ -10,7 +12,6 @@ import {
 } from "react-native";
 import Draggable from "react-native-draggable";
 import ViewShot from "react-native-view-shot";
-import { FontAwesome } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -29,14 +30,43 @@ export default function CustomizeScreen() {
   const { quotes, saveQuote, updateQuotePosition, saveToDevice } = useQuotes();
   const colorScheme = useColorScheme();
   const viewShotRef = useRef<any>(null);
+  const params = useLocalSearchParams();
 
+  // State for quote, author, image
   const [customText, setCustomText] = useState("");
   const [customAuthor, setCustomAuthor] = useState("");
   const [selectedImage, setSelectedImage] = useState(backgroundImages[0]);
   const [isCustomQuote, setIsCustomQuote] = useState(false);
-  const [currentQuote, setCurrentQuote] = useState(
-    quotes.length > 0 ? quotes[quotes.length - 1] : null
-  );
+  const [currentQuote, setCurrentQuote] = useState(null);
+
+  // On mount, check for params and prefill state
+  useEffect(() => {
+    if (params && (params.text || params.author || params.backgroundImage)) {
+      setCustomText(params.text ? String(params.text) : "");
+      setCustomAuthor(params.author ? String(params.author) : "");
+      setSelectedImage(
+        params.backgroundImage
+          ? String(params.backgroundImage)
+          : backgroundImages[0]
+      );
+      setIsCustomQuote(true); // Open in edit mode
+      setCurrentQuote(null); // Not using context quote
+    } else if (quotes.length > 0) {
+      // Fallback to last quote in context
+      const last = quotes[quotes.length - 1];
+      setCustomText(last.text || "");
+      setCustomAuthor(last.author || "");
+      setSelectedImage(last.backgroundImage || backgroundImages[0]);
+      setIsCustomQuote(true);
+      setCurrentQuote(last);
+    } else {
+      setCustomText("");
+      setCustomAuthor("");
+      setSelectedImage(backgroundImages[0]);
+      setIsCustomQuote(true);
+      setCurrentQuote(null);
+    }
+  }, [params, quotes]);
 
   // Handle image selection from gallery
   const pickImage = async () => {
@@ -83,13 +113,24 @@ export default function CustomizeScreen() {
   };
 
   const handleAddToFavorites = async () => {
-    if (currentQuote) {
+    // Save the current custom state as a new favorite
+    if (customText.trim() !== "") {
+      const newQuote = {
+        id: Date.now().toString(),
+        text: customText,
+        author: customAuthor,
+        backgroundImage: selectedImage,
+        createdAt: new Date().toISOString(),
+        textPosition: { x: 50, y: 50 },
+      };
       try {
-        await saveQuote(currentQuote);
+        await saveQuote(newQuote);
         Alert.alert("Success", "Quote added to favorites!");
       } catch (error) {
         Alert.alert("Error", "Failed to save quote to favorites.");
       }
+    } else {
+      Alert.alert("Error", "Please enter a quote before saving.");
     }
   };
 
@@ -154,52 +195,25 @@ export default function CustomizeScreen() {
             style={styles.backgroundImage}
           />
 
-          {isCustomQuote ? (
-            <View style={styles.customTextContainer}>
-              <Draggable
-                x={50}
-                y={50}
-                onDragRelease={(event, gestureState) => {
-                  handleDragRelease(gestureState.moveX, gestureState.moveY);
-                }}
-              >
-                <View style={styles.textContainer}>
-                  <ThemedText style={styles.quoteText}>
-                    "{customText}"
-                  </ThemedText>
-                  {customAuthor ? (
-                    <ThemedText style={styles.authorText}>
-                      - {customAuthor}
-                    </ThemedText>
-                  ) : null}
-                </View>
-              </Draggable>
-            </View>
-          ) : currentQuote ? (
+          {/* Always show editable draggable text for custom or loaded quote */}
+          <View style={styles.customTextContainer}>
             <Draggable
-              x={currentQuote.textPosition?.x || 50}
-              y={currentQuote.textPosition?.y || 50}
-              onDragRelease={(_, gestureState) =>
-                handleDragRelease(
-                  gestureState.moveX,
-                  gestureState.moveY
-                )
-              }
-              onPressOut={() => {}}
-              onRelease={() => {}}
+              x={50}
+              y={50}
+              onDragRelease={(event, gestureState) => {
+                handleDragRelease(gestureState.moveX, gestureState.moveY);
+              }}
             >
               <View style={styles.textContainer}>
-                <ThemedText style={styles.quoteText}>
-                  "{currentQuote.text}"
-                </ThemedText>
-                {currentQuote.author ? (
+                <ThemedText style={styles.quoteText}>"{customText}"</ThemedText>
+                {customAuthor ? (
                   <ThemedText style={styles.authorText}>
-                    - {currentQuote.author}
+                    - {customAuthor}
                   </ThemedText>
                 ) : null}
               </View>
             </Draggable>
-          ) : null}
+          </View>
         </ViewShot>
       </ThemedView>
 
@@ -228,21 +242,25 @@ export default function CustomizeScreen() {
       </ThemedView>
 
       <View className="flex-row justify-around mt-5">
-          <TouchableOpacity
-            className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
-            onPress={handleAddToFavorites}
-          >
-            <FontAwesome name="heart" size={16} color="white" />
-            <ThemedText className="text-white font-bold ml-2">Add to Favorites</ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
-            onPress={handleSaveToDevice}
-          >
-            <FontAwesome name="save" size={16} color="white" />
-            <ThemedText className="text-white font-bold ml-2">Save to Device</ThemedText>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          className="bg-blue-600 px-4 py-3 rounded-lg flex-row items-center"
+          onPress={handleAddToFavorites}
+        >
+          <FontAwesome name="heart" size={16} color="white" />
+          <ThemedText className="text-white font-bold ml-2">
+            Add to Favorites
+          </ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="bg-green-700 px-4 py-3 rounded-lg flex-row items-center"
+          onPress={handleSaveToDevice}
+        >
+          <FontAwesome name="save" size={16} color="white" />
+          <ThemedText className="text-white font-bold ml-2">
+            Save to Device
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
     </ThemedView>
   );
 }
@@ -365,5 +383,4 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
-
 });

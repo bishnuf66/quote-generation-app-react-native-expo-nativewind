@@ -532,7 +532,7 @@ export default function GenerateScreen() {
                         lineHeight: 28,
                       }}
                     >
-                      "{quote.text}"
+                      &quot;{quote.text}&quot;
                     </Text>
                     <Text
                       style={{
