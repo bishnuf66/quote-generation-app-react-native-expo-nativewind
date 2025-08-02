@@ -78,7 +78,7 @@ export default function HomeScreen() {
     ).start();
   }, [fadeAnim, rotateAnim, scaleAnim1, scaleAnim2, scaleAnim3, slideAnim]); // Run only once on mount
 
-  const navigateTo = (screen: string) => {
+  const navigateTo = (screen: "/generate" | "/customize" | "/favorites") => {
     router.push(screen);
   };
 
@@ -101,7 +101,7 @@ export default function HomeScreen() {
     icon: string;
     onPress: () => void;
     scaleAnim: Animated.Value;
-    gradientColors: string[];
+    gradientColors: [string, string, ...string[]];
     delay?: number;
   }) => {
     const pressAnim = useRef(new Animated.Value(1)).current;
@@ -202,7 +202,7 @@ export default function HomeScreen() {
       >
         <View className="mb-6">
           <GradientCard
-            gradientColors={["#667eea", "#764ba2"]}
+            gradientColors={["#667eea", "#764ba2"] as [string, string, ...string[]]}
             style={{ padding: 20, borderRadius: 50, alignSelf: "center" }}
           >
             <AnimatedIcon
@@ -220,7 +220,7 @@ export default function HomeScreen() {
         </ThemedText>
 
         <LinearGradient
-          colors={["#667eea", "#764ba2"]}
+          colors={["#667eea", "#764ba2"] as [string, string, ...string[]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{ height: 4, width: 80, borderRadius: 2, marginBottom: 16, alignSelf: "center" }}

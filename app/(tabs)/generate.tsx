@@ -1,7 +1,7 @@
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -127,7 +127,7 @@ export default function GenerateScreen() {
     PEXELS_API_KEY ? "Key found" : "Key missing!"
   );
 
-  const fetchRandomImage = async (
+  const fetchRandomImage = useCallback(async (
     categoryId: string = selectedImageCategory
   ) => {
     setImageLoading(true);
@@ -188,7 +188,7 @@ export default function GenerateScreen() {
     } finally {
       setImageLoading(false);
     }
-  };
+  }, [selectedImageCategory]);
 
   const fetchQuoteFromServer = async (category: QuoteCategory) => {
     setLoading(true);
@@ -211,9 +211,9 @@ export default function GenerateScreen() {
     }
   };
 
-  const generateNewQuoteAndImage = (category: QuoteCategory) => {
+  const generateNewQuoteAndImage = useCallback((category: QuoteCategory) => {
     fetchQuoteFromServer(category);
-  };
+  }, []);
 
   const handleNewBackground = () => {
     fetchRandomImage(selectedImageCategory);
@@ -228,7 +228,7 @@ export default function GenerateScreen() {
       }
     };
     init();
-  }, [selectedQuoteCategory, selectedImageCategory]);
+  }, [selectedQuoteCategory, selectedImageCategory, generateNewQuoteAndImage, fetchRandomImage, backgroundUrl]);
 
   useEffect(() => {
     // Entrance animation
@@ -300,7 +300,7 @@ export default function GenerateScreen() {
       }
 
       console.log("Attempting to capture quote card...");
-      if (!viewShotRef.current) {
+      if (!viewShotRef.current || !viewShotRef.current.capture) {
         Alert.alert("Error", "Unable to capture quote image.");
         return;
       }
@@ -626,7 +626,7 @@ export default function GenerateScreen() {
               <AnimatedButton
                 title="New Quote"
                 onPress={() => fetchQuoteFromServer(selectedQuoteCategory)}
-                gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]}
+                gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [string, string, ...string[]]}
                 variant="outline"
                 size="small"
                 disabled={loading}
@@ -644,7 +644,7 @@ export default function GenerateScreen() {
               <AnimatedButton
                 title={imageLoading ? "Loading..." : "New Image"}
                 onPress={() => fetchRandomImage(selectedImageCategory)}
-                gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]}
+                gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [string, string, ...string[]]}
                 variant="outline"
                 size="small"
                 disabled={imageLoading}
@@ -697,7 +697,7 @@ export default function GenerateScreen() {
               />
 
               <AnimatedButton
-  
+
                 title="Customize"
                 onPress={handleCustomize}
                 gradientColors={commonGradients.secondary}

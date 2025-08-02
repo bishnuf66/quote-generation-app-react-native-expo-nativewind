@@ -68,8 +68,8 @@ export default function NotFoundScreen() {
             </ThemedText>
 
             <ThemedText className="text-base text-white/70 text-center mb-8 leading-6">
-              The page you're looking for doesn't exist.{"\n"}
-              Let's get you back on track!
+              The page you&apos;re looking for doesn&apos;t exist.{"\n"}
+              Let&apos;s get you back on track!
             </ThemedText>
 
             {/* Action Buttons */}

@@ -12,7 +12,7 @@ interface FloatingActionButtonProps {
     onPress: () => void;
     icon: string;
     iconLibrary?: 'FontAwesome' | 'Ionicons';
-    gradientColors?: string[];
+    gradientColors?: [string, string, ...string[]];
     size?: number;
     bottom?: number;
     right?: number;
@@ -26,7 +26,7 @@ export function FloatingActionButton({
     onPress,
     icon,
     iconLibrary = 'FontAwesome',
-    gradientColors = ['#667eea', '#764ba2'],
+    gradientColors = ['#667eea', '#764ba2'] as [string, string, ...string[]],
     size = 56,
     bottom = 20,
     right = 20,
@@ -156,20 +156,20 @@ export function MultiFAB({
     mainIcon,
     mainOnPress,
     actions,
-    gradientColors = ['#667eea', '#764ba2'],
+    gradientColors = ['#667eea', '#764ba2'] as [string, string, ...string[]],
     size = 56,
     bottom = 20,
     right = 20,
 }: {
     mainIcon: string;
     mainOnPress?: () => void;
-    actions: Array<{
+    actions: {
         icon: string;
         onPress: () => void;
         label?: string;
-        gradientColors?: string[];
-    }>;
-    gradientColors?: string[];
+        gradientColors?: [string, string, ...string[]];
+    }[];
+    gradientColors?: [string, string, ...string[]];
     size?: number;
     bottom?: number;
     right?: number;

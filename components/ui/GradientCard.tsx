@@ -8,7 +8,7 @@ import {
 
 interface GradientCardProps {
     children: React.ReactNode;
-    gradientColors?: string[];
+    gradientColors?: [string, string, ...string[]];
     style?: ViewStyle;
     onPress?: () => void;
     disabled?: boolean;
@@ -21,7 +21,7 @@ interface GradientCardProps {
 
 export function GradientCard({
     children,
-    gradientColors = ['#667eea', '#764ba2'],
+    gradientColors = ['#667eea', '#764ba2'] as [string, string, ...string[]],
     style,
     onPress,
     disabled = false,

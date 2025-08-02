@@ -318,7 +318,7 @@ export default function FavoritesScreen() {
     onPress: () => void,
     icon: string,
     color: string,
-    gradientColors: string[],
+    gradientColors: [string, string, ...string[]],
     library: 'FontAwesome' | 'Ionicons' = 'Ionicons',
     size: number = 16
   ) => {

@@ -5,39 +5,39 @@
 export const AppTheme = {
   colors: {
     primary: {
-      gradient: ["#667eea", "#764ba2"],
+      gradient: ["#667eea", "#764ba2"] as [string, string, ...string[]],
       solid: "#667eea",
     },
     secondary: {
-      gradient: ["#f093fb", "#f5576c"],
+      gradient: ["#f093fb", "#f5576c"] as [string, string, ...string[]],
       solid: "#f093fb",
     },
     accent: {
-      gradient: ["#4facfe", "#00f2fe"],
+      gradient: ["#4facfe", "#00f2fe"] as [string, string, ...string[]],
       solid: "#4facfe",
     },
     success: {
-      gradient: ["#11998e", "#38ef7d"],
+      gradient: ["#11998e", "#38ef7d"] as [string, string, ...string[]],
       solid: "#11998e",
     },
     warning: {
-      gradient: ["#ff7e5f", "#feb47b"],
+      gradient: ["#ff7e5f", "#feb47b"] as [string, string, ...string[]],
       solid: "#ff7e5f",
     },
     info: {
-      gradient: ["#667eea", "#764ba2"],
+      gradient: ["#667eea", "#764ba2"] as [string, string, ...string[]],
       solid: "#667eea",
     },
   },
 
   backgrounds: {
     light: {
-      primary: ["#ffffff", "#f8fafc"],
-      secondary: ["#f8fafc", "#e2e8f0"],
+      primary: ["#ffffff", "#f8fafc"] as [string, string, ...string[]],
+      secondary: ["#f8fafc", "#e2e8f0"] as [string, string, ...string[]],
     },
     dark: {
-      primary: ["#0f0f23", "#1a1a2e"],
-      secondary: ["#1a1a2e", "#16213e"],
+      primary: ["#0f0f23", "#1a1a2e"] as [string, string, ...string[]],
+      secondary: ["#1a1a2e", "#16213e"] as [string, string, ...string[]],
     },
   },
 

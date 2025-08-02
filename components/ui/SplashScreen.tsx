@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, View } from 'react-native';
 import { ThemedText } from '../ThemedText';

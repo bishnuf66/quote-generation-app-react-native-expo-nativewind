@@ -21,7 +21,7 @@ export function ThemedText({
 }: ThemedTextProps) {
   const colorScheme = useColorScheme();
 
-  const getTextStyles = () => {
+  const getTextStyles = (): any => {
     const isDark = colorScheme === 'dark';
     const baseColor = isDark ? '#ffffff' : '#1a202c';
     const mutedColor = isDark ? '#a0aec0' : '#718096';
@@ -71,7 +71,7 @@ export function ThemedText({
       },
     };
 
-    let textStyle = styles[type];
+    let textStyle: any = styles[type];
 
     if (shadow) {
       textStyle = {

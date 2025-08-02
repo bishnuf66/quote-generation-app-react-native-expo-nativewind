@@ -15,7 +15,7 @@ interface AnimatedButtonProps {
     /** Press handler function */
     onPress: (event: GestureResponderEvent) => void;
     /** Gradient colors for background (default: ['#667eea', '#764ba2']) */
-    gradientColors?: string[];
+    gradientColors?: [string, string, ...string[]];
     /** Additional styles for the button container */
     style?: ViewStyle;
     /** Additional styles for the button text */
@@ -45,7 +45,7 @@ interface AnimatedButtonProps {
 export function AnimatedButton({
     title,
     onPress,
-    gradientColors = ['#667eea', '#764ba2'],
+    gradientColors = ['#667eea', '#764ba2'] as [string, string, ...string[]],
     style,
     textStyle,
     disabled = false,
@@ -105,20 +105,20 @@ export function AnimatedButton({
         }
     };
 
-    const getContainerStyles = () => {
+    const getContainerStyles = (): ViewStyle => {
         const baseStyles = getBaseSizeStyles();
 
         // Custom dimensions for the container
-        const customDimensions = {
-            ...(width !== undefined && { width }),
-            ...(height !== undefined && { height }),
-            ...(minWidth !== undefined && { minWidth }),
-            ...(minHeight !== undefined && { minHeight }),
-            ...(maxWidth !== undefined && { maxWidth }),
-            ...(maxHeight !== undefined && { maxHeight }),
+        const customDimensions: ViewStyle = {
+            ...(width !== undefined && { width: width as ViewStyle['width'] }),
+            ...(height !== undefined && { height: height as ViewStyle['height'] }),
+            ...(minWidth !== undefined && { minWidth: minWidth as ViewStyle['minWidth'] }),
+            ...(minHeight !== undefined && { minHeight: minHeight as ViewStyle['minHeight'] }),
+            ...(maxWidth !== undefined && { maxWidth: maxWidth as ViewStyle['maxWidth'] }),
+            ...(maxHeight !== undefined && { maxHeight: maxHeight as ViewStyle['maxHeight'] }),
         };
 
-        const containerStyles = {
+        const containerStyles: ViewStyle = {
             borderRadius: baseStyles.borderRadius,
             ...customDimensions
         };
@@ -131,16 +131,16 @@ export function AnimatedButton({
         return containerStyles;
     };
 
-    const getContentStyles = () => {
+    const getContentStyles = (): ViewStyle => {
         const baseStyles = getBaseSizeStyles();
 
         // If custom dimensions are provided, remove padding to let container handle sizing
         if (width !== undefined || height !== undefined) {
             return {
                 flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
+                flexDirection: 'row' as const,
+                alignItems: 'center' as const,
+                justifyContent: 'center' as const,
             };
         }
 
@@ -148,9 +148,9 @@ export function AnimatedButton({
         return {
             paddingHorizontal: baseStyles.paddingHorizontal,
             paddingVertical: baseStyles.paddingVertical,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
         };
     };
 
