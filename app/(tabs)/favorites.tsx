@@ -1,13 +1,13 @@
 import { useQuotes } from "@/context/QuotesContext";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Image as RNImage,
   ScrollView,
   Share,
   Text,
@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { captureRef } from "react-native-view-shot";
+
 const { width } = Dimensions.get("window");
 const CARD_GAP = 16;
 const CARD_WIDTH = (width - CARD_GAP * 3) / 2;
@@ -25,11 +26,11 @@ type QuoteType = {
   id: string;
   text: string;
   author?: string;
-  backgroundImage: string; // Ensure this is always a string
+  backgroundImage: string;
   createdAt: string | number | Date;
   category?: string;
   imageCategory?: string;
-  [key: string]: unknown; // More specific than 'any'
+  [key: string]: unknown;
 };
 
 export default function FavoritesScreen() {
@@ -73,8 +74,16 @@ export default function FavoritesScreen() {
 
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
-  const viewRefs = useRef<{ [key: string]: View | null }>({});
-  // Colors based on theme
+
+  // Change this to use React refs instead of findNodeHandle
+  const viewRefs = useRef<{ [key: string]: any }>({});
+
+  useEffect(() => {
+    return () => {
+      viewRefs.current = {};
+    };
+  }, []);
+
   const backgroundColor = colorScheme === "dark" ? "bg-black" : "bg-gray-50";
   const textColor = colorScheme === "dark" ? "text-white" : "text-gray-900";
   const secondaryText =
@@ -103,6 +112,8 @@ export default function FavoritesScreen() {
               return newSet;
             });
           }
+          // Clean up view ref
+          delete viewRefs.current[id];
         },
         style: "destructive",
       },
@@ -136,11 +147,17 @@ export default function FavoritesScreen() {
   const handleShareQuote = async (quote: QuoteType) => {
     try {
       const viewRef = viewRefs.current[quote.id];
-      if (!viewRef) return;
+      if (!viewRef) {
+        console.log("No view ref found for quote:", quote.id);
+        Alert.alert("Error", "Could not capture the quote. Please try again.");
+        return;
+      }
 
+      console.log("Capturing view for sharing...");
       const result = await captureRef(viewRef, {
         format: "png",
         quality: 0.8,
+        result: "tmpfile",
       });
 
       await Share.share({
@@ -149,13 +166,41 @@ export default function FavoritesScreen() {
       });
     } catch (error) {
       console.error("Error sharing:", error);
+      Alert.alert("Error", "Failed to share the quote. Please try again.");
     }
   };
 
   const saveToGallery = async (quote: QuoteType) => {
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
+      // Get the view ref first and check if it exists
+      const viewRef = viewRefs.current[quote.id];
+      console.log(
+        `Attempting to save quote ${quote.id}, ref exists:`,
+        !!viewRef
+      );
+      console.log("All stored refs:", Object.keys(viewRefs.current));
 
+      if (!viewRef) {
+        console.log("No view ref found for quote:", quote.id);
+        Alert.alert(
+          "Error",
+          "Could not find the quote content to save. Please try again."
+        );
+        return;
+      }
+
+      // Wait for images to load if they're still loading
+      if (loadingImages[quote.backgroundImage]) {
+        console.log("Waiting for image to load...");
+        Alert.alert(
+          "Please wait",
+          "Image is still loading. Please try again in a moment."
+        );
+        return;
+      }
+
+      // Request permissions
+      const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
           "Permission required",
@@ -164,21 +209,64 @@ export default function FavoritesScreen() {
         return;
       }
 
-      const viewRef = viewRefs.current[quote.id];
-      if (!viewRef) return;
+      // Show loading indicator
+      Alert.alert("Saving...", "Preparing your quote for saving...");
 
-      const result = await captureRef(viewRef, {
-        format: "png",
-        quality: 1,
-      });
+      // Wait a bit longer to ensure the view is rendered
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      console.log("Attempting to capture view for gallery save...");
+
+      let result;
+      try {
+        // Try high quality PNG first
+        result = await captureRef(viewRef, {
+          format: "png",
+          quality: 1,
+          result: "tmpfile",
+          width: 1080,
+          height: 1080,
+        });
+        console.log("Successfully captured with PNG format");
+      } catch (err1) {
+        console.warn("PNG capture failed, trying JPG fallback...", err1);
+        try {
+          // Fallback: JPG
+          result = await captureRef(viewRef, {
+            format: "jpg",
+            quality: 0.95,
+            result: "tmpfile",
+            width: 1080,
+            height: 1080,
+          });
+          console.log("Successfully captured with JPG format");
+        } catch (err2) {
+          console.error("Both capture attempts failed.", err2);
+          throw new Error("capture_failed");
+        }
+      }
+
+      // Save to gallery
+      console.log("Saving to gallery:", result);
       const asset = await MediaLibrary.createAssetAsync(result);
       await MediaLibrary.createAlbumAsync("QuoteCards", asset, false);
-
       Alert.alert("Success", "Quote saved to your gallery!");
     } catch (error) {
-      console.error("Error saving to gallery:", error);
-      Alert.alert("Error", "Failed to save to gallery. Please try again.");
+      console.error("Error in saveToGallery:", error);
+      let errorMessage = "Failed to save to gallery. Please try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("permission")) {
+          errorMessage =
+            "Please enable storage permissions in your device settings to save images.";
+        } else if (error.message.includes("view_not_found")) {
+          errorMessage =
+            "Could not find the quote content to save. Please try again.";
+        } else if (error.message.includes("capture_failed")) {
+          errorMessage =
+            "Could not capture the quote image. Try scrolling and try again, or restart the app.";
+        }
+      }
+      Alert.alert("Error", errorMessage);
     }
   };
 
@@ -266,11 +354,6 @@ export default function FavoritesScreen() {
               }}
             >
               <View
-                ref={(ref) => {
-                  if (ref) {
-                    viewRefs.current[quote.id] = ref;
-                  }
-                }}
                 className="rounded-2xl overflow-hidden bg-white dark:bg-gray-800 shadow-lg"
                 style={{
                   shadowColor: colorScheme === "dark" ? "#1f2937" : "#9ca3af",
@@ -280,108 +363,127 @@ export default function FavoritesScreen() {
                   elevation: 4,
                 }}
               >
-                {/* Image with overlay */}
-                <View className="relative aspect-square bg-gray-200 dark:bg-gray-700">
-                  {quote.backgroundImage ? (
-                    <>
-                      <Image
-                        source={{
-                          uri: quote.backgroundImage,
-                        }}
-                        className="w-full h-full"
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                        }}
-                        contentFit="cover"
-                        transition={200}
-                        onError={() => {
-                          console.log(
-                            "Error loading image:",
-                            quote.backgroundImage
-                          );
-                          if (quote.backgroundImage) {
-                            handleImageError(quote.backgroundImage);
-                          }
-                        }}
-                        onLoadStart={() => {
-                          if (quote.backgroundImage) {
-                            handleImageLoadStart(quote.backgroundImage);
-                          }
-                        }}
-                        onLoadEnd={() => {
-                          if (quote.backgroundImage) {
-                            handleImageLoadEnd(quote.backgroundImage);
-                          }
-                        }}
-                      />
-                      {loadingImages[quote.backgroundImage] && (
-                        <View className="absolute inset-0 bg-black/30 items-center justify-center">
-                          <ActivityIndicator color="#ffffff" size="large" />
-                        </View>
-                      )}
-                      {failedImageUrls.has(quote.backgroundImage) && (
-                        <View className="absolute inset-0 bg-gray-200 dark:bg-gray-700 items-center justify-center">
-                          <Ionicons
-                            name="image-outline"
-                            size={48}
-                            color="#9ca3af"
-                          />
-                          <Text className="text-gray-500 mt-2 text-center px-2">
-                            Couldn't load image
-                          </Text>
-                        </View>
-                      )}
-                    </>
-                  ) : (
-                    <View className="w-full h-full items-center justify-center">
-                      <Ionicons
-                        name="image-outline"
-                        size={48}
-                        color="#9ca3af"
-                      />
-                      <Text className="text-gray-500 mt-2 text-center px-2">
-                        No image available
-                      </Text>
-                    </View>
-                  )}
+                {/* Content to be saved to gallery */}
+                <View
+                  ref={(ref) => {
+                    if (ref) {
+                      viewRefs.current[quote.id] = ref;
+                      console.log(`Stored ref for quote ${quote.id}:`, !!ref);
+                    }
+                  }}
+                  className="relative"
+                  collapsable={false}
+                >
+                  {/* Image with overlay */}
+                  <View className="aspect-square bg-gray-200 dark:bg-gray-700">
+                    {quote.backgroundImage ? (
+                      <>
+                        {/* Use RNImage for view-shot compatibility */}
+                        <RNImage
+                          source={{ uri: quote.backgroundImage }}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            resizeMode: "cover",
+                          }}
+                          onError={() => {
+                            console.log(
+                              "Error loading image:",
+                              quote.backgroundImage
+                            );
+                            if (quote.backgroundImage) {
+                              handleImageError(quote.backgroundImage);
+                            }
+                          }}
+                          onLoadStart={() => {
+                            if (quote.backgroundImage) {
+                              handleImageLoadStart(quote.backgroundImage);
+                            }
+                          }}
+                          onLoadEnd={() => {
+                            if (quote.backgroundImage) {
+                              handleImageLoadEnd(quote.backgroundImage);
+                            }
+                          }}
+                        />
+                        {loadingImages[quote.backgroundImage] && (
+                          <View className="absolute inset-0 bg-black/30 items-center justify-center">
+                            <ActivityIndicator color="#ffffff" size="large" />
+                          </View>
+                        )}
+                        {failedImageUrls.has(quote.backgroundImage) && (
+                          <View className="absolute inset-0 bg-gray-200 dark:bg-gray-700 items-center justify-center">
+                            <Ionicons
+                              name="image-outline"
+                              size={48}
+                              color="#9ca3af"
+                            />
+                            <Text className="text-gray-500 mt-2 text-center px-2">
+                              Couldn't load image
+                            </Text>
+                          </View>
+                        )}
+                      </>
+                    ) : (
+                      <View className="w-full h-full items-center justify-center">
+                        <Ionicons
+                          name="image-outline"
+                          size={48}
+                          color="#9ca3af"
+                        />
+                        <Text className="text-gray-500 mt-2 text-center px-2">
+                          No image available
+                        </Text>
+                      </View>
+                    )}
 
-                  <View className=" bg-black/30 p-4 justify-end">
-                    <Text
-                      className="text-white text-base font-medium mb-2"
-                      numberOfLines={3}
-                      style={{
-                        textShadowColor: "rgba(0,0,0,0.8)",
-                        textShadowOffset: { width: 0, height: 1 },
-                        textShadowRadius: 2,
-                      }}
-                    >
-                      "{quote.text}"
-                    </Text>
-                    {quote.author && quote.author !== "Unknown" && (
+                    <View className="absolute inset-0 bg-black/30 p-4 justify-end">
                       <Text
-                        className="text-cyan-300 text-sm font-medium text-right"
+                        className="text-white text-base font-medium mb-2"
+                        numberOfLines={3}
                         style={{
                           textShadowColor: "rgba(0,0,0,0.8)",
                           textShadowOffset: { width: 0, height: 1 },
                           textShadowRadius: 2,
                         }}
                       >
-                        — {quote.author}
+                        "{quote.text}"
                       </Text>
-                    )}
-                    <Text
-                      className={`text-xs text-right text-sky-50 ${secondaryText}`}
-                    >
-                      {new Date(quote.createdAt).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </Text>
+                      {quote.author && quote.author !== "Unknown" && (
+                        <Text
+                          className="text-cyan-300 text-sm font-medium text-right"
+                          style={{
+                            textShadowColor: "rgba(0,0,0,0.8)",
+                            textShadowOffset: { width: 0, height: 1 },
+                            textShadowRadius: 2,
+                          }}
+                        >
+                          — {quote.author}
+                        </Text>
+                      )}
+                      <Text
+                        className="text-xs text-right text-sky-50"
+                        style={{
+                          textShadowColor: "rgba(0,0,0,0.8)",
+                          textShadowOffset: { width: 0, height: 1 },
+                          textShadowRadius: 2,
+                        }}
+                      >
+                        {new Date(quote.createdAt).toLocaleDateString(
+                          undefined,
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
