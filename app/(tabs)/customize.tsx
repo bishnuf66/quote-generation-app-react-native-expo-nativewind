@@ -591,7 +591,7 @@ export default function CustomizeScreen() {
               icon={
                 <AnimatedIcon
                   name="crosshairs"
-                  size={14}
+                  size={16}
                   color="white"
                   library="FontAwesome"
                 />
@@ -607,9 +607,8 @@ export default function CustomizeScreen() {
               icon={
                 <AnimatedIcon
                   name="image"
-                  size={14}
+                  size={16}
                   color="white"
-                  animationType="pulse"
                   library="FontAwesome"
                 />
               }
@@ -626,34 +625,32 @@ export default function CustomizeScreen() {
               title="Add to Favorites"
               onPress={handleAddToFavorites}
               gradientColors={["#667eea", "#764ba2"]}
-              size="medium"
+              size="small"
               icon={
                 <AnimatedIcon
                   name="heart"
                   size={16}
                   color="white"
-
-                  // animationType="pulse"
                   library="FontAwesome"
+                  style={{ marginRight: 8 }}
                 />
               }
-              style={{ flex: 1, marginHorizontal: 8 }}
             />
 
             <AnimatedButton
               title="Save to Device"
               onPress={handleSaveToDevice}
               gradientColors={["#11998e", "#38ef7d"]}
-              size="medium"
+              size="small"
               icon={
                 <AnimatedIcon
                   name="download"
                   size={16}
                   color="white"
                   library="FontAwesome"
+                  style={{ marginLeft: 8 }}
                 />
               }
-              style={{ flex: 1, marginHorizontal: 8 }}
             />
           </View>
         </View>
