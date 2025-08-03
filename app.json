@@ -2,7 +2,7 @@
   "expo": {
     "android": {
       "package": "com.ghost.quotesapp",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
@@ -16,7 +16,7 @@
     },
     "name": "QuotesApp",
     "slug": "QuotesApp",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "Create, customize and share beautiful inspirational quotes with stunning backgrounds and smooth animations.",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
