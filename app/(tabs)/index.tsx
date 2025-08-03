@@ -137,7 +137,7 @@ export default function HomeScreen() {
                 name={icon}
                 size={24}
                 color="white"
-                animationType="bounce"
+                // animationType="bounce"
                 library="FontAwesome"
               />
             </View>
@@ -310,9 +310,15 @@ export default function HomeScreen() {
 
           <View className="space-y-2">
             <View className="flex-row items-start">
+              <View className="w-2 h-2 rounded-full bg-pink-500 mt-2 mr-3" />
+              <ThemedText className="flex-1 opacity-80 leading-5">
+                Customize with your own quote and background image
+              </ThemedText>
+            </View>
+            <View className="flex-row items-start">
               <View className="w-2 h-2 rounded-full bg-blue-500 mt-2 mr-3" />
               <ThemedText className="flex-1 opacity-80 leading-5">
-                Multilpe Catgeory of quotes generation
+                Multilpe Catgeory of quotes and background generation
               </ThemedText>
             </View>
             <View className="flex-row items-start">
