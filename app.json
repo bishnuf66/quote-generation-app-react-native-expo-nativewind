@@ -2,20 +2,27 @@
   "expo": {
     "android": {
       "package": "com.ghost.quotesapp",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/placeholder.png",
+        "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "name": "QuotesApp",
     "slug": "QuotesApp",
-    "version": "1.0.1",
+    "version": "1.0.2",
+    "description": "Create, customize and share beautiful inspirational quotes with stunning backgrounds and smooth animations.",
     "orientation": "portrait",
-    "icon": "./assets/images/placeholder.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "quotesapp",
     "userInterfaceStyle": "automatic",
+    "primaryColor": "#667eea",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -23,14 +30,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/placeholder.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/placeholder.png",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

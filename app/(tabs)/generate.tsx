@@ -605,6 +605,7 @@ export default function GenerateScreen() {
                           paddingHorizontal: 20,
                           paddingVertical: 10,
                           borderRadius: 20,
+                          marginLeft: 3,
                           borderWidth: selectedQuoteCategory === category ? 1 : 0,
                           borderColor: "#667eea",
                         }}
@@ -653,6 +654,7 @@ export default function GenerateScreen() {
                   onPress={handleRefreshPress}
                   style={{
                     padding: 8,
+
                     backgroundColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
                     borderRadius: 20,
                   }}
@@ -673,7 +675,7 @@ export default function GenerateScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingVertical: 4, gap: 12 }}
+                contentContainerStyle={{ paddingVertical: 4, gap: 12, marginLeft: 2 }}
               >
                 {imageCategories.map((category) => (
                   <Animated.View

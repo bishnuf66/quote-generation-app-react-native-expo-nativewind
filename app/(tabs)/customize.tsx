@@ -632,7 +632,7 @@ export default function CustomizeScreen() {
                   name="heart"
                   size={16}
                   color="white"
-                  
+
                   // animationType="pulse"
                   library="FontAwesome"
                 />
