@@ -6,20 +6,24 @@ import {
   Alert,
   Animated,
   Image,
-  NativeSyntheticEvent,
   ScrollView,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemedText } from "@/components/ThemedText";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
+import { GlassCard } from "@/components/ui/GradientCard";
 import { SimpleDots, SimpleLoader } from "@/components/ui/SimpleLoader";
+import { fallbackQuotes } from "@/constants/fallbackQuotes";
 import { commonGradients } from "@/constants/Theme";
 import { useQuotes } from "@/context/QuotesContext";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { LinearGradient } from "expo-linear-gradient";
 
 type QuoteCategory =
   | "inspirational"
@@ -61,6 +65,7 @@ interface PexelsPhoto {
 
 export default function GenerateScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
   const { addQuote, saveQuote, saveToDevice } = useQuotes();
   const [quote, setQuote] = useState<{ text: string; author: string } | null>(
     null
@@ -80,6 +85,8 @@ export default function GenerateScreen() {
   // Animation refs
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const refreshRotateAnim = useRef(new Animated.Value(0)).current;
 
   const quoteCategories: QuoteCategory[] = [
     "inspirational",
@@ -121,10 +128,6 @@ export default function GenerateScreen() {
 
   // Load Pexels API key from environment variables
   const PEXELS_API_KEY = process.env.EXPO_PUBLIC_PEXELS_API_KEY;
-  // console.log(
-  //   "Using Pexels API key:",
-  //   PEXELS_API_KEY ? "Key found" : "Key missing!"
-  // );
 
   const fetchRandomImage = useCallback(
     async (categoryId: string = selectedImageCategory) => {
@@ -190,40 +193,6 @@ export default function GenerateScreen() {
     [PEXELS_API_KEY, imageCategories, selectedImageCategory]
   );
 
-  // Local fallback quotes
-  const fallbackQuotes = {
-    inspirational: [
-      { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
-      { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
-      { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
-    ],
-    motivational: [
-      { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", author: "Winston Churchill" },
-      { text: "The only limit to our realization of tomorrow is our doubts of today.", author: "Franklin D. Roosevelt" },
-      { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
-    ],
-    life: [
-      { text: "In the end, it's not the years in your life that count. It's the life in your years.", author: "Abraham Lincoln" },
-      { text: "Life is what happens when you're busy making other plans.", author: "John Lennon" },
-      { text: "The purpose of our lives is to be happy.", author: "Dalai Lama" },
-    ],
-    success: [
-      { text: "Success is not the key to happiness. Happiness is the key to success. If you love what you are doing, you will be successful.", author: "Albert Schweitzer" },
-      { text: "The road to success and the road to failure are almost exactly the same.", author: "Colin R. Davis" },
-      { text: "Success usually comes to those who are too busy to be looking for it.", author: "Henry David Thoreau" },
-    ],
-    funny: [
-      { text: "I'm not lazy, I'm on energy saving mode.", author: "Unknown" },
-      { text: "I'm not arguing, I'm just explaining why I'm right.", author: "Unknown" },
-      { text: "I'm not procrastinating, I'm doing side quests.", author: "Unknown" },
-    ],
-    love: [
-      { text: "The best thing to hold onto in life is each other.", author: "Audrey Hepburn" },
-      { text: "We are most alive when we're in love.", author: "John Updike" },
-      { text: "The best and most beautiful things in this world cannot be seen or even heard, but must be felt with the heart.", author: "Helen Keller" },
-    ]
-  };
-
   const getRandomFallbackQuote = (category: QuoteCategory) => {
     const quotes = fallbackQuotes[category] || fallbackQuotes.inspirational;
     return quotes[Math.floor(Math.random() * quotes.length)];
@@ -245,8 +214,8 @@ export default function GenerateScreen() {
           },
           timeout: 5000,
           headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            Accept: "application/json",
+            "Content-Type": "application/json",
           },
         });
 
@@ -340,6 +309,22 @@ export default function GenerateScreen() {
     fetchRandomImage(selectedImageCategory);
   };
 
+  const handleRefreshPress = () => {
+    // Start rotation animation
+    Animated.timing(refreshRotateAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      // Reset the animation value for next press
+      refreshRotateAnim.setValue(0);
+    });
+
+    // Trigger the refresh actions
+    handleNewBackground();
+    generateNewQuoteAndImage(selectedQuoteCategory);
+  };
+
   useEffect(() => {
     const init = async () => {
       await generateNewQuoteAndImage(selectedQuoteCategory);
@@ -352,20 +337,27 @@ export default function GenerateScreen() {
   }, [selectedQuoteCategory, selectedImageCategory, generateNewQuoteAndImage]);
 
   useEffect(() => {
-    // Entrance animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    // Staggered entrance animation
+    Animated.sequence([
+      Animated.timing(headerAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
-  }, [fadeAnim, slideAnim]); // Run only once on mount
+  }, [fadeAnim, headerAnim, slideAnim]);
 
   const handleQuoteCategorySelect = (category: QuoteCategory) => {
     setSelectedQuoteCategory(category);
@@ -450,151 +442,312 @@ export default function GenerateScreen() {
     }
   };
 
+  // Create rotation interpolation for refresh button
+  const refreshRotation = refreshRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
     <ErrorBoundary>
-      <View className="flex-1 bg-black">
-        {/* Background Image */}
-        <View
+      <LinearGradient
+        colors={
+          colorScheme === "dark" ? ["#0f0f23", "#1a1a2e"] : ["#ffffff", "#f8fafc"]
+        }
+        style={{ flex: 1 }}
+      >
+        {/* Enhanced Header */}
+        <Animated.View
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "black",
+            paddingTop: 56,
+            paddingBottom: 24,
+            paddingHorizontal: 24,
+            opacity: headerAnim,
+            transform: [
+              {
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                }),
+              },
+            ],
           }}
         >
-          <Image
-            source={{ uri: backgroundUrl }}
+          <View
             style={{
-              flex: 1,
-              width: "100%",
-              height: "100%",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 16,
             }}
-            resizeMode="cover"
-            onError={(e: NativeSyntheticEvent<{ error: any }>) => {
-              console.log("Image loading error:", e.nativeEvent.error);
-              console.log("Failed URL:", backgroundUrl);
-              // Fallback to a default image
-              setBackgroundUrl(
-                "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
-              );
-            }}
-            onLoad={() => console.log("Image loaded successfully")}
-          />
-        </View>
+          >
+            <View style={{ flex: 1 }}>
+              <ThemedText type="hero" shadow>
+                Generate
+              </ThemedText>
+              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+                <AnimatedIcon
+                  name="magic"
+                  size={16}
+                  color="#667eea"
+                  animationType="pulse"
+                  library="FontAwesome"
+                />
+                <ThemedText
+                  style={{
+                    marginLeft: 8,
+                    color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                    fontSize: 16,
+                  }}
+                >
+                  Create inspiring quotes with beautiful backgrounds
+                </ThemedText>
+              </View>
+            </View>
 
-        {/* Dark Overlay */}
-        <View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            zIndex: 1,
-          }}
-          pointerEvents="none"
-        />
+            <GlassCard
+              style={{ padding: 12, borderRadius: 12 }}
+              backgroundColor={
+                colorScheme === "dark"
+                  ? "rgba(255,255,255,0.1)"
+                  : "rgba(0,0,0,0.05)"
+              }
+            >
+              <AnimatedIcon
+                name="quote-left"
+                size={20}
+                color={colorScheme === "dark" ? "#ffffff" : "#000000"}
+                animationType="pulse"
+                library="FontAwesome"
+              />
+            </GlassCard>
+          </View>
+
+          {/* Decorative line */}
+          <LinearGradient
+            colors={["#667eea", "#764ba2", "#f093fb"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ height: 3, borderRadius: 2 }}
+          />
+
+          {loading && (
+            <View style={{ alignItems: "center", marginTop: 16 }}>
+              <SimpleDots color="#67e8f9" />
+            </View>
+          )}
+        </Animated.View>
+
         <ScrollView
-          contentContainerStyle={{
-            paddingBottom: 40,
-            flexGrow: 1,
-            zIndex: 2,
-          }}
-          style={{
-            flex: 1,
-            zIndex: 2,
-          }}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
         >
           <Animated.View
-            className="items-center pt-8 pb-4"
             style={{
+              paddingHorizontal: 24,
+              marginBottom: 16,
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
             }}
           >
-            <Text className="text-3xl font-bold text-white drop-shadow-lg mb-1">
-              Generate Quotes
-            </Text>
-            {loading && (
-              <View className="mt-2">
-                <SimpleDots color="#67e8f9" />
+            <GlassCard
+              style={{ padding: 20, borderRadius: 16, marginBottom: 16 }}
+              backgroundColor={
+                colorScheme === "dark"
+                  ? "rgba(255,255,255,0.05)"
+                  : "rgba(0,0,0,0.02)"
+              }
+            >
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <AnimatedIcon
+                    name="tags"
+                    size={16}
+                    color="#667eea"
+                    library="FontAwesome"
+                  />
+                  <ThemedText style={{ marginLeft: 8, fontWeight: "600", fontSize: 18 }}>
+                    Quote Categories
+                  </ThemedText>
+                </View>
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#67e8f9" }} />
               </View>
-            )}
-          </Animated.View>
-          <View className="px-5 pb-2">
-            <View className="mb-4">
-              <Text className="text-white font-medium mb-2 ml-1">
-                Quote Categories
-              </Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                className="flex-row space-x-2 mb-4"
+                contentContainerStyle={{ paddingVertical: 4, gap: 12 }}
               >
                 {quoteCategories.map((category) => (
-                  <TouchableOpacity
+                  <Animated.View
                     key={category}
-                    className={`px-4 py-2 mx-1 rounded-full ${selectedQuoteCategory === category ? "bg-cyan-600" : "bg-white/20"}`}
-                    onPress={() => handleQuoteCategorySelect(category)}
+                    style={{
+                      transform: [
+                        {
+                          scale: selectedQuoteCategory === category ? 1.05 : 1,
+                        },
+                      ],
+                    }}
                   >
-                    <Text
-                      className={`text-sm font-medium ${selectedQuoteCategory === category ? "text-white" : "text-gray-200"}`}
+                    <TouchableOpacity
+                      onPress={() => handleQuoteCategorySelect(category)}
+                      activeOpacity={0.8}
                     >
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
+                      <LinearGradient
+                        colors={
+                          selectedQuoteCategory === category
+                            ? ["#667eea", "#764ba2"]
+                            : colorScheme === "dark"
+                              ? ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]
+                              : ["rgba(0,0,0,0.05)", "rgba(0,0,0,0.02)"]
+                        }
+                        style={{
+                          paddingHorizontal: 20,
+                          paddingVertical: 10,
+                          borderRadius: 20,
+                          borderWidth: selectedQuoteCategory === category ? 1 : 0,
+                          borderColor: "#667eea",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: selectedQuoteCategory === category
+                              ? "white"
+                              : colorScheme === "dark" ? "#e2e8f0" : "#374151",
+                          }}
+                        >
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </Animated.View>
                 ))}
               </ScrollView>
 
-              <View className="flex-row justify-between items-center mb-2 px-1">
-                <Text className="text-white font-medium">Backgrounds</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 24 }}>
+                <View>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <AnimatedIcon
+                      name="image"
+                      size={16}
+                      color="#667eea"
+                      library="FontAwesome"
+                    />
+                    <ThemedText style={{ marginLeft: 8, fontWeight: "600", fontSize: 18 }}>
+                      Backgrounds
+                    </ThemedText>
+                  </View>
+                  <ThemedText
+                    style={{
+                      color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                      marginTop: 4,
+                    }}
+                  >
+                    Tap to change the background style
+                  </ThemedText>
+                </View>
                 <TouchableOpacity
-                  onPress={() => {
-                    handleNewBackground();
-                    generateNewQuoteAndImage(selectedQuoteCategory);
+                  onPress={handleRefreshPress}
+                  style={{
+                    padding: 8,
+                    backgroundColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                    borderRadius: 20,
                   }}
-                  className="p-"
                 >
-                  <FontAwesome name="refresh" size={16} color="#06b6d4" />
+                  <Animated.View
+                    style={{
+                      transform: [{ rotate: refreshRotation }],
+                    }}
+                  >
+                    <FontAwesome
+                      name="refresh"
+                      size={16}
+                      color={colorScheme === "dark" ? "#ffffff" : "#374151"}
+                    />
+                  </Animated.View>
                 </TouchableOpacity>
               </View>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                className="flex-row space-x-2"
+                contentContainerStyle={{ paddingVertical: 4, gap: 12 }}
               >
                 {imageCategories.map((category) => (
-                  <TouchableOpacity
+                  <Animated.View
                     key={category.id}
-                    className={`p-2 rounded-lg mx-1 w-16 h-14 items-center ${selectedImageCategory === category.id ? "bg-cyan-600/30 border border-cyan-500" : "bg-white/10"}`}
-                    onPress={handleImageCategoryPress(category.id)}
+                    style={{
+                      transform: [
+                        {
+                          scale:
+                            selectedImageCategory === category.id ? 1.05 : 1,
+                        },
+                      ],
+                    }}
                   >
-                    <FontAwesome
-                      name={category.icon}
-                      size={20}
-                      color={
-                        selectedImageCategory === category.id
-                          ? "#06b6d4"
-                          : "#e5e7eb"
-                      }
-                      className="mb-1"
-                    />
-                    <Text
-                      className={`text-xs ${selectedImageCategory === category.id ? "text-cyan-400" : "text-gray-300"}`}
+                    <TouchableOpacity
+                      onPress={handleImageCategoryPress(category.id)}
+                      activeOpacity={0.8}
                     >
-                      {category.name}
-                    </Text>
-                  </TouchableOpacity>
+                      <LinearGradient
+                        colors={
+                          selectedImageCategory === category.id
+                            ? ["#667eea", "#764ba2"]
+                            : colorScheme === "dark"
+                              ? ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.02)"]
+                              : ["rgba(0,0,0,0.03)", "rgba(0,0,0,0.01)"]
+                        }
+                        style={{
+                          padding: 12,
+                          borderRadius: 16,
+                          width: 80,
+                          height: 80,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderWidth: selectedImageCategory === category.id ? 1 : 0,
+                          borderColor: "#667eea",
+                        }}
+                      >
+                        <FontAwesome
+                          name={category.icon}
+                          size={20}
+                          color={
+                            selectedImageCategory === category.id
+                              ? "white"
+                              : colorScheme === "dark" ? "#9ca3af" : "#6b7280"
+                          }
+                        />
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: "500",
+                            marginTop: 4,
+                            color: selectedImageCategory === category.id
+                              ? "white"
+                              : colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                          }}
+                        >
+                          {category.name}
+                        </Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </Animated.View>
                 ))}
               </ScrollView>
-            </View>
-          </View>
+            </GlassCard>
+          </Animated.View>
 
           {/* Quote Card - Only this section will be captured */}
-          <View className="mx-5 mt-6">
+          <Animated.View
+            style={{
+              marginHorizontal: 24,
+              marginTop: 24,
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
             <ViewShot
               ref={viewShotRef}
               options={{
@@ -612,14 +765,16 @@ export default function GenerateScreen() {
                 style={{
                   width: "100%",
                   aspectRatio: 1,
-                  borderRadius: 16,
+                  borderRadius: 20,
                   backgroundColor: "rgba(0,0,0,0.6)",
                   overflow: "hidden",
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 4 },
+                  shadowColor: "#667eea",
+                  shadowOffset: { width: 0, height: 8 },
                   shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 8,
+                  shadowRadius: 16,
+                  elevation: 16,
+                  borderWidth: 2,
+                  borderColor: colorScheme === "dark" ? "#667eea" : "#764ba2",
                 }}
               >
                 <Image
@@ -736,80 +891,62 @@ export default function GenerateScreen() {
                 </View>
               </View>
             </ViewShot>
-          </View>
+          </Animated.View>
 
           <Animated.View
-            className="mt-4 px-5"
             style={{
+              marginTop: 24,
+              paddingHorizontal: 24,
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
             }}
           >
-            <View className="flex-row justify-around flex-wrap">
+            <View style={{ flexDirection: "row", justifyContent: "space-around", flexWrap: "wrap", gap: 12 }}>
               <AnimatedButton
                 title="New Quote"
                 onPress={() => fetchQuoteFromServer(selectedQuoteCategory)}
-                gradientColors={
-                  ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [
-                    string,
-                    string,
-                    ...string[],
-                  ]
-                }
-                variant="outline"
+                gradientColors={commonGradients.primary}
                 size="small"
                 disabled={loading}
                 icon={
                   <AnimatedIcon
                     name="quote-left"
                     size={16}
-                    color="#67e8f9"
+                    color="white"
                     library="FontAwesome"
                   />
                 }
-                style={{
-                  marginBottom: 12,
-                  marginHorizontal: 4,
-                  borderColor: "#0891b2",
-                }}
+                style={{ flex: 1, marginHorizontal: 4 }}
               />
 
               <AnimatedButton
                 title={imageLoading ? "Loading..." : "New Image"}
                 onPress={() => fetchRandomImage(selectedImageCategory)}
-                gradientColors={
-                  ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [
-                    string,
-                    string,
-                    ...string[],
-                  ]
-                }
-                variant="outline"
+                gradientColors={commonGradients.accent}
                 size="small"
                 disabled={imageLoading}
                 icon={
                   imageLoading ? (
-                    <SimpleLoader size={16} color="#67e8f9" />
+                    <SimpleLoader size={16} color="white" />
                   ) : (
                     <AnimatedIcon
                       name="image"
                       size={16}
-                      color="#67e8f9"
+                      color="white"
                       library="FontAwesome"
                     />
                   )
                 }
-                style={{
-                  marginBottom: 12,
-                  marginHorizontal: 4,
-                  borderColor: "#0891b2",
-                }}
+                style={{ flex: 1, marginHorizontal: 4 }}
               />
 
+            </View>
+
+            <View style={{ flexDirection: "row", justifyContent: "space-around", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
               <AnimatedButton
                 title="Save to Favorites"
                 onPress={handleSaveToFavorites}
-                gradientColors={commonGradients.success}
+                gradientColors={commonGradients.warning}
                 size="small"
                 icon={
                   <AnimatedIcon
@@ -820,13 +957,13 @@ export default function GenerateScreen() {
                     library="FontAwesome"
                   />
                 }
-                style={{ marginBottom: 12, marginHorizontal: 4 }}
+              // style={{ flex: 1, marginHorizontal: 4 }}
               />
 
               <AnimatedButton
                 title="Save to Device"
                 onPress={handleSaveToDevice}
-                gradientColors={commonGradients.accent}
+                gradientColors={commonGradients.success}
                 size="small"
                 icon={
                   <AnimatedIcon
@@ -836,7 +973,7 @@ export default function GenerateScreen() {
                     library="FontAwesome"
                   />
                 }
-                style={{ marginBottom: 12, marginHorizontal: 4 }}
+              // style={{ flex: 1, marginHorizontal: 4 }}
               />
 
               <AnimatedButton
@@ -849,16 +986,15 @@ export default function GenerateScreen() {
                     name="paint-brush"
                     size={16}
                     color="white"
-                    animationType="shake"
                     library="FontAwesome"
                   />
                 }
-                style={{ marginBottom: 12, marginHorizontal: 4 }}
+                style={{ flex: 1, marginHorizontal: 4 }}
               />
             </View>
           </Animated.View>
         </ScrollView>
-      </View>
+      </LinearGradient>
     </ErrorBoundary>
   );
 }
