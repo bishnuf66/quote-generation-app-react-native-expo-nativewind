@@ -9,7 +9,7 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
@@ -445,104 +445,112 @@ export default function GenerateScreen() {
   // Create rotation interpolation for refresh button
   const refreshRotation = refreshRotateAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+    outputRange: ["0deg", "360deg"],
   });
 
   return (
     <ErrorBoundary>
       <LinearGradient
         colors={
-          colorScheme === "dark" ? ["#0f0f23", "#1a1a2e"] : ["#ffffff", "#f8fafc"]
+          colorScheme === "dark"
+            ? ["#0f0f23", "#1a1a2e"]
+            : ["#ffffff", "#f8fafc"]
         }
         style={{ flex: 1 }}
       >
         {/* Enhanced Header */}
-        <Animated.View
-          style={{
-            paddingTop: 56,
-            paddingBottom: 24,
-            paddingHorizontal: 24,
-            opacity: headerAnim,
-            transform: [
-              {
-                translateY: headerAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-20, 0],
-                }),
-              },
-            ],
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 16,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <ThemedText type="hero" shadow>
-                Generate
-              </ThemedText>
-              <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
-                <AnimatedIcon
-                  name="magic"
-                  size={16}
-                  color="#667eea"
-                  animationType="pulse"
-                  library="FontAwesome"
-                />
-                <ThemedText
-                  style={{
-                    marginLeft: 8,
-                    color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
-                    fontSize: 16,
-                  }}
-                >
-                  Create inspiring quotes with beautiful backgrounds
-                </ThemedText>
-              </View>
-            </View>
-
-            <GlassCard
-              style={{ padding: 12, borderRadius: 12 }}
-              backgroundColor={
-                colorScheme === "dark"
-                  ? "rgba(255,255,255,0.1)"
-                  : "rgba(0,0,0,0.05)"
-              }
-            >
-              <AnimatedIcon
-                name="quote-left"
-                size={20}
-                color={colorScheme === "dark" ? "#ffffff" : "#000000"}
-                animationType="pulse"
-                library="FontAwesome"
-              />
-            </GlassCard>
-          </View>
-
-          {/* Decorative line */}
-          <LinearGradient
-            colors={["#667eea", "#764ba2", "#f093fb"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{ height: 3, borderRadius: 2 }}
-          />
-
-          {loading && (
-            <View style={{ alignItems: "center", marginTop: 16 }}>
-              <SimpleDots color="#67e8f9" />
-            </View>
-          )}
-        </Animated.View>
 
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
+          <Animated.View
+            style={{
+              paddingTop: 56,
+              paddingBottom: 24,
+              paddingHorizontal: 24,
+              opacity: headerAnim,
+              transform: [
+                {
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-20, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <ThemedText type="hero" shadow>
+                  Generate
+                </ThemedText>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginTop: 8,
+                  }}
+                >
+                  <AnimatedIcon
+                    name="magic"
+                    size={16}
+                    color="#667eea"
+                    animationType="pulse"
+                    library="FontAwesome"
+                  />
+                  <ThemedText
+                    style={{
+                      marginLeft: 8,
+                      color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                      fontSize: 16,
+                    }}
+                  >
+                    Create inspiring quotes with beautiful backgrounds
+                  </ThemedText>
+                </View>
+              </View>
+
+              <GlassCard
+                style={{ padding: 12, borderRadius: 12 }}
+                backgroundColor={
+                  colorScheme === "dark"
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.05)"
+                }
+              >
+                <AnimatedIcon
+                  name="quote-left"
+                  size={20}
+                  color={colorScheme === "dark" ? "#ffffff" : "#000000"}
+                  animationType="pulse"
+                  library="FontAwesome"
+                />
+              </GlassCard>
+            </View>
+
+            {/* Decorative line */}
+            <LinearGradient
+              colors={["#667eea", "#764ba2", "#f093fb"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ height: 3, borderRadius: 2 }}
+            />
+
+            {loading && (
+              <View style={{ alignItems: "center", marginTop: 16 }}>
+                <SimpleDots color="#67e8f9" />
+              </View>
+            )}
+          </Animated.View>
           <Animated.View
             style={{
               paddingHorizontal: 24,
@@ -559,7 +567,14 @@ export default function GenerateScreen() {
                   : "rgba(0,0,0,0.02)"
               }
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 16,
+                }}
+              >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <AnimatedIcon
                     name="tags"
@@ -567,11 +582,20 @@ export default function GenerateScreen() {
                     color="#667eea"
                     library="FontAwesome"
                   />
-                  <ThemedText style={{ marginLeft: 8, fontWeight: "600", fontSize: 18 }}>
+                  <ThemedText
+                    style={{ marginLeft: 8, fontWeight: "600", fontSize: 18 }}
+                  >
                     Quote Categories
                   </ThemedText>
                 </View>
-                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#67e8f9" }} />
+                <View
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: "#67e8f9",
+                  }}
+                />
               </View>
               <ScrollView
                 horizontal
@@ -598,7 +622,10 @@ export default function GenerateScreen() {
                           selectedQuoteCategory === category
                             ? ["#667eea", "#764ba2"]
                             : colorScheme === "dark"
-                              ? ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]
+                              ? [
+                                  "rgba(255,255,255,0.1)",
+                                  "rgba(255,255,255,0.05)",
+                                ]
                               : ["rgba(0,0,0,0.05)", "rgba(0,0,0,0.02)"]
                         }
                         style={{
@@ -606,7 +633,8 @@ export default function GenerateScreen() {
                           paddingVertical: 10,
                           borderRadius: 20,
                           marginLeft: 3,
-                          borderWidth: selectedQuoteCategory === category ? 1 : 0,
+                          borderWidth:
+                            selectedQuoteCategory === category ? 1 : 0,
                           borderColor: "#667eea",
                         }}
                       >
@@ -614,9 +642,12 @@ export default function GenerateScreen() {
                           style={{
                             fontSize: 14,
                             fontWeight: "600",
-                            color: selectedQuoteCategory === category
-                              ? "white"
-                              : colorScheme === "dark" ? "#e2e8f0" : "#374151",
+                            color:
+                              selectedQuoteCategory === category
+                                ? "white"
+                                : colorScheme === "dark"
+                                  ? "#e2e8f0"
+                                  : "#374151",
                           }}
                         >
                           {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -627,7 +658,15 @@ export default function GenerateScreen() {
                 ))}
               </ScrollView>
 
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12, marginTop: 24 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 12,
+                  marginTop: 24,
+                }}
+              >
                 <View>
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <AnimatedIcon
@@ -636,7 +675,9 @@ export default function GenerateScreen() {
                       color="#667eea"
                       library="FontAwesome"
                     />
-                    <ThemedText style={{ marginLeft: 8, fontWeight: "600", fontSize: 18 }}>
+                    <ThemedText
+                      style={{ marginLeft: 8, fontWeight: "600", fontSize: 18 }}
+                    >
                       Backgrounds
                     </ThemedText>
                   </View>
@@ -655,7 +696,10 @@ export default function GenerateScreen() {
                   style={{
                     padding: 8,
 
-                    backgroundColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
+                    backgroundColor:
+                      colorScheme === "dark"
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.05)",
                     borderRadius: 20,
                   }}
                 >
@@ -675,7 +719,11 @@ export default function GenerateScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingVertical: 4, gap: 12, marginLeft: 2 }}
+                contentContainerStyle={{
+                  paddingVertical: 4,
+                  gap: 12,
+                  marginLeft: 2,
+                }}
               >
                 {imageCategories.map((category) => (
                   <Animated.View
@@ -698,7 +746,10 @@ export default function GenerateScreen() {
                           selectedImageCategory === category.id
                             ? ["#667eea", "#764ba2"]
                             : colorScheme === "dark"
-                              ? ["rgba(255,255,255,0.05)", "rgba(255,255,255,0.02)"]
+                              ? [
+                                  "rgba(255,255,255,0.05)",
+                                  "rgba(255,255,255,0.02)",
+                                ]
                               : ["rgba(0,0,0,0.03)", "rgba(0,0,0,0.01)"]
                         }
                         style={{
@@ -708,7 +759,8 @@ export default function GenerateScreen() {
                           height: 80,
                           alignItems: "center",
                           justifyContent: "center",
-                          borderWidth: selectedImageCategory === category.id ? 1 : 0,
+                          borderWidth:
+                            selectedImageCategory === category.id ? 1 : 0,
                           borderColor: "#667eea",
                         }}
                       >
@@ -718,7 +770,9 @@ export default function GenerateScreen() {
                           color={
                             selectedImageCategory === category.id
                               ? "white"
-                              : colorScheme === "dark" ? "#9ca3af" : "#6b7280"
+                              : colorScheme === "dark"
+                                ? "#9ca3af"
+                                : "#6b7280"
                           }
                         />
                         <Text
@@ -726,9 +780,12 @@ export default function GenerateScreen() {
                             fontSize: 12,
                             fontWeight: "500",
                             marginTop: 4,
-                            color: selectedImageCategory === category.id
-                              ? "white"
-                              : colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                            color:
+                              selectedImageCategory === category.id
+                                ? "white"
+                                : colorScheme === "dark"
+                                  ? "#9ca3af"
+                                  : "#6b7280",
                           }}
                         >
                           {category.name}
@@ -903,7 +960,14 @@ export default function GenerateScreen() {
               transform: [{ translateY: slideAnim }],
             }}
           >
-            <View style={{ flexDirection: "row", justifyContent: "space-around", flexWrap: "wrap", gap: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
               <AnimatedButton
                 title="New Quote"
                 onPress={() => fetchQuoteFromServer(selectedQuoteCategory)}
@@ -941,10 +1005,17 @@ export default function GenerateScreen() {
                 }
                 style={{ flex: 1, marginHorizontal: 4 }}
               />
-
             </View>
 
-            <View style={{ flexDirection: "row", justifyContent: "space-around", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-around",
+                flexWrap: "wrap",
+                gap: 12,
+                marginTop: 12,
+              }}
+            >
               <AnimatedButton
                 title="Save to Favorites"
                 onPress={handleSaveToFavorites}
@@ -959,7 +1030,7 @@ export default function GenerateScreen() {
                     library="FontAwesome"
                   />
                 }
-              // style={{ flex: 1, marginHorizontal: 4 }}
+                // style={{ flex: 1, marginHorizontal: 4 }}
               />
 
               <AnimatedButton
@@ -975,7 +1046,7 @@ export default function GenerateScreen() {
                     library="FontAwesome"
                   />
                 }
-              // style={{ flex: 1, marginHorizontal: 4 }}
+                // style={{ flex: 1, marginHorizontal: 4 }}
               />
 
               <AnimatedButton

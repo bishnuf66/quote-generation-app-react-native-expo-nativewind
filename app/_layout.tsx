@@ -1,3 +1,4 @@
+import { SimpleLoader } from "@/components/ui/SimpleLoader";
 import {
   DarkTheme,
   DefaultTheme,
@@ -13,7 +14,6 @@ import "react-native-reanimated";
 import { QuotesProvider } from "../context/QuotesContext";
 import "../global.css";
 import { useColorScheme } from "../hooks/useColorScheme";
-import { SimpleLoader } from "@/components/ui/SimpleLoader";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
