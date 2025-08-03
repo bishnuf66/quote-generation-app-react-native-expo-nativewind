@@ -11,7 +11,7 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  View
+  View,
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
@@ -77,7 +77,7 @@ export default function CustomizeScreen() {
     // Handle navigation with quoteId (from generate screen)
     else if (params.quoteId && quotes.length > 0) {
       console.log("Setting up from quoteId:", params.quoteId);
-      const foundQuote = quotes.find(q => q.id === params.quoteId);
+      const foundQuote = quotes.find((q) => q.id === params.quoteId);
       if (foundQuote) {
         setCustomText(foundQuote.text || "");
         setCustomAuthor(foundQuote.author || "");
@@ -93,7 +93,12 @@ export default function CustomizeScreen() {
       }
     }
     // Handle fresh start - only if no params at all
-    else if (!params.text && !params.author && !params.backgroundImage && !params.quoteId) {
+    else if (
+      !params.text &&
+      !params.author &&
+      !params.backgroundImage &&
+      !params.quoteId
+    ) {
       console.log("Setting up empty state");
       setCustomText("");
       setCustomAuthor("");
@@ -102,7 +107,16 @@ export default function CustomizeScreen() {
       pan.setValue({ x: IMAGE_WIDTH / 2 - 125, y: IMAGE_HEIGHT / 2 - 40 });
       setIsInitialized(true);
     }
-  }, [params.text, params.author, params.backgroundImage, params.quoteId, isInitialized, params, quotes, pan]);
+  }, [
+    params.text,
+    params.author,
+    params.backgroundImage,
+    params.quoteId,
+    isInitialized,
+    params,
+    quotes,
+    pan,
+  ]);
 
   // Reset initialization flag when navigating to a new quote
   useEffect(() => {
@@ -222,7 +236,10 @@ export default function CustomizeScreen() {
         author: customAuthor,
         backgroundImage: selectedImage,
         createdAt: new Date().toISOString(),
-        textPosition: { x: (pan.x as any)._value || 0, y: (pan.y as any)._value || 0 },
+        textPosition: {
+          x: (pan.x as any)._value || 0,
+          y: (pan.y as any)._value || 0,
+        },
       };
       try {
         await saveQuote(newQuote);
@@ -246,9 +263,7 @@ export default function CustomizeScreen() {
   return (
     <LinearGradient
       colors={
-        colorScheme === "dark"
-          ? ["#0f0f23", "#1a1a2e"]
-          : ["#ffffff", "#f8fafc"]
+        colorScheme === "dark" ? ["#0f0f23", "#1a1a2e"] : ["#ffffff", "#f8fafc"]
       }
       style={{ flex: 1 }}
     >
@@ -258,24 +273,39 @@ export default function CustomizeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Enhanced Header */}
-        <View style={{ paddingTop: 56, paddingBottom: 24, paddingHorizontal: 24 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <View
+          style={{ paddingTop: 56, paddingBottom: 24, paddingHorizontal: 24 }}
+        >
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 16,
+            }}
+          >
             <View style={{ flex: 1 }}>
               <ThemedText type="hero" shadow>
                 Customize
               </ThemedText>
-              <ThemedText style={{
-                color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
-                fontSize: 16,
-                marginTop: 4
-              }}>
+              <ThemedText
+                style={{
+                  color: colorScheme === "dark" ? "#9ca3af" : "#6b7280",
+                  fontSize: 16,
+                  marginTop: 4,
+                }}
+              >
                 Drag the quote to position it perfectly
               </ThemedText>
             </View>
 
             <GlassCard
               style={{ padding: 12, borderRadius: 12 }}
-              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}
+              backgroundColor={
+                colorScheme === "dark"
+                  ? "rgba(255,255,255,0.1)"
+                  : "rgba(0,0,0,0.05)"
+              }
             >
               <AnimatedIcon
                 name="magic"
@@ -298,13 +328,15 @@ export default function CustomizeScreen() {
 
         {/* Instructions */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-
-
           <GlassCard
             style={{ padding: 16, borderRadius: 12 }}
-            backgroundColor={colorScheme === "dark" ? "rgba(102, 126, 234, 0.1)" : "rgba(102, 126, 234, 0.05)"}
+            backgroundColor={
+              colorScheme === "dark"
+                ? "rgba(102, 126, 234, 0.1)"
+                : "rgba(102, 126, 234, 0.05)"
+            }
           >
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
               <AnimatedIcon
                 name="lightbulb-o"
                 size={16}
@@ -312,10 +344,12 @@ export default function CustomizeScreen() {
                 library="FontAwesome"
               />
               <View style={{ marginLeft: 12, flex: 1 }}>
-                <ThemedText style={{ fontWeight: '600', marginBottom: 4 }}>
+                <ThemedText style={{ fontWeight: "600", marginBottom: 4 }}>
                   Edit Mode:
                 </ThemedText>
-                <ThemedText style={{ fontSize: 14, opacity: 0.8, lineHeight: 20 }}>
+                <ThemedText
+                  style={{ fontSize: 14, opacity: 0.8, lineHeight: 20 }}
+                >
                   1. Modify the quote and author text
                   {"\n"}2. Change the background image
                   {"\n"}3. Drag the quote to position it perfectly
@@ -329,16 +363,26 @@ export default function CustomizeScreen() {
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
           <GlassCard
             style={{ padding: 20, borderRadius: 16, marginBottom: 16 }}
-            backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+            backgroundColor={
+              colorScheme === "dark"
+                ? "rgba(255,255,255,0.05)"
+                : "rgba(0,0,0,0.02)"
+            }
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
               <AnimatedIcon
                 name="quote-left"
                 size={16}
                 color="#667eea"
                 library="FontAwesome"
               />
-              <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
+              <ThemedText style={{ marginLeft: 8, fontWeight: "600" }}>
                 Quote Text
               </ThemedText>
             </View>
@@ -348,13 +392,16 @@ export default function CustomizeScreen() {
                   color: colorScheme === "dark" ? "#fff" : "#000",
                   fontSize: 16,
                   minHeight: 80,
-                  textAlignVertical: 'top',
-                  backgroundColor: 'transparent',
+                  textAlignVertical: "top",
+                  backgroundColor: "transparent",
                   borderWidth: 1,
-                  borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                  borderColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
                   borderRadius: 12,
                   padding: 12,
-                }
+                },
               ]}
               placeholder="Enter or edit your quote text..."
               placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
@@ -367,16 +414,26 @@ export default function CustomizeScreen() {
 
           <GlassCard
             style={{ padding: 20, borderRadius: 16 }}
-            backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)"}
+            backgroundColor={
+              colorScheme === "dark"
+                ? "rgba(255,255,255,0.05)"
+                : "rgba(0,0,0,0.02)"
+            }
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: 12,
+              }}
+            >
               <AnimatedIcon
                 name="user"
                 size={16}
                 color="#667eea"
                 library="FontAwesome"
               />
-              <ThemedText style={{ marginLeft: 8, fontWeight: '600' }}>
+              <ThemedText style={{ marginLeft: 8, fontWeight: "600" }}>
                 Author
               </ThemedText>
             </View>
@@ -385,12 +442,15 @@ export default function CustomizeScreen() {
                 {
                   color: colorScheme === "dark" ? "#fff" : "#000",
                   fontSize: 16,
-                  backgroundColor: 'transparent',
+                  backgroundColor: "transparent",
                   borderWidth: 1,
-                  borderColor: colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+                  borderColor:
+                    colorScheme === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
                   borderRadius: 12,
                   padding: 12,
-                }
+                },
               ]}
               placeholder="Author name (optional)"
               placeholderTextColor={colorScheme === "dark" ? "#aaa" : "#666"}
@@ -403,19 +463,24 @@ export default function CustomizeScreen() {
 
         {/* Enhanced Image Container */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-          <View style={{
-            height: IMAGE_HEIGHT,
-            borderRadius: 16,
-            overflow: "hidden",
-            borderWidth: 2,
-            borderColor: colorScheme === "dark" ? "#667eea" : "#764ba2",
-            shadowColor: "#667eea",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.2,
-            shadowRadius: 8,
-            elevation: 8,
-          }}>
-            <ViewShot ref={viewShotRef} style={{ flex: 1, position: "relative" }}>
+          <View
+            style={{
+              height: IMAGE_HEIGHT,
+              borderRadius: 16,
+              overflow: "hidden",
+              borderWidth: 2,
+              borderColor: colorScheme === "dark" ? "#667eea" : "#764ba2",
+              shadowColor: "#667eea",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 8,
+            }}
+          >
+            <ViewShot
+              ref={viewShotRef}
+              style={{ flex: 1, position: "relative" }}
+            >
               {selectedImage ? (
                 <Image
                   source={{ uri: selectedImage }}
@@ -423,7 +488,11 @@ export default function CustomizeScreen() {
                 />
               ) : (
                 <LinearGradient
-                  colors={colorScheme === "dark" ? ["#1a1a2e", "#16213e"] : ["#f8fafc", "#e2e8f0"]}
+                  colors={
+                    colorScheme === "dark"
+                      ? ["#1a1a2e", "#16213e"]
+                      : ["#f8fafc", "#e2e8f0"]
+                  }
                   style={{
                     flex: 1,
                     justifyContent: "center",
@@ -437,20 +506,24 @@ export default function CustomizeScreen() {
                     animationType="pulse"
                     library="FontAwesome"
                   />
-                  <ThemedText style={{
-                    fontSize: 18,
-                    marginTop: 12,
-                    opacity: 0.7,
-                    textAlign: "center"
-                  }}>
+                  <ThemedText
+                    style={{
+                      fontSize: 18,
+                      marginTop: 12,
+                      opacity: 0.7,
+                      textAlign: "center",
+                    }}
+                  >
                     Tap &quot;Select Image&quot; to add background
                   </ThemedText>
-                  <ThemedText style={{
-                    fontSize: 14,
-                    marginTop: 4,
-                    opacity: 0.5,
-                    textAlign: "center"
-                  }}>
+                  <ThemedText
+                    style={{
+                      fontSize: 14,
+                      marginTop: 4,
+                      opacity: 0.5,
+                      textAlign: "center",
+                    }}
+                  >
                     Your quote will appear here
                   </ThemedText>
                 </LinearGradient>
@@ -507,7 +580,9 @@ export default function CustomizeScreen() {
 
         {/* Enhanced Controls */}
         <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-between" }}
+          >
             <AnimatedButton
               title="Center Text"
               onPress={resetPosition}
@@ -544,7 +619,9 @@ export default function CustomizeScreen() {
         </View>
 
         <View style={{ paddingHorizontal: 24, paddingTop: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+          <View
+            style={{ flexDirection: "row", justifyContent: "space-around" }}
+          >
             <AnimatedButton
               title="Add to Favorites"
               onPress={handleAddToFavorites}
@@ -555,7 +632,8 @@ export default function CustomizeScreen() {
                   name="heart"
                   size={16}
                   color="white"
-                  animationType="pulse"
+                  
+                  // animationType="pulse"
                   library="FontAwesome"
                 />
               }

@@ -314,41 +314,44 @@ export default function FavoritesScreen() {
     }
   };
 
-  const renderActionButton = React.useCallback((
-    onPress: () => void,
-    icon: string,
-    color: string,
-    gradientColors: [string, string, ...string[]],
-    library: 'FontAwesome' | 'Ionicons' = 'Ionicons',
-    size: number = 16
-  ) => {
-    return (
-      <View style={{ flex: 1, marginHorizontal: 2 }}>
-        <TouchableOpacity onPress={onPress}>
-          <LinearGradient
-            colors={gradientColors}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              paddingVertical: 8,
-              paddingHorizontal: 4,
-              borderRadius: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <AnimatedIcon
-              name={icon}
-              size={size}
-              color={color}
-              library={library}
-              animationType="none"
-            />
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-    );
-  }, []);
+  const renderActionButton = React.useCallback(
+    (
+      onPress: () => void,
+      icon: string,
+      color: string,
+      gradientColors: [string, string, ...string[]],
+      library: "FontAwesome" | "Ionicons" = "Ionicons",
+      size: number = 16
+    ) => {
+      return (
+        <View style={{ flex: 1, marginHorizontal: 2 }}>
+          <TouchableOpacity onPress={onPress}>
+            <LinearGradient
+              colors={gradientColors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                paddingVertical: 8,
+                paddingHorizontal: 4,
+                borderRadius: 8,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <AnimatedIcon
+                name={icon}
+                size={size}
+                color={color}
+                library={library}
+                animationType="none"
+              />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      );
+    },
+    []
+  );
 
   if (savedQuotes.length === 0) {
     return (
@@ -385,12 +388,22 @@ export default function FavoritesScreen() {
               No Favorites Yet
             </ThemedText>
 
-            <ThemedText className={`text-center ${secondaryText} mb-8 max-w-sm leading-6 text-lg`}>
-              Save your favorite quotes and they&apos;ll appear here as beautiful, shareable cards
+            <ThemedText
+              className={`text-center ${secondaryText} mb-8 max-w-sm leading-6 text-lg`}
+            >
+              Save your favorite quotes and they&apos;ll appear here as
+              beautiful, shareable cards
             </ThemedText>
 
-            <View className="space-y-4 w-full max-w-xs">
+            <View className="w-full max-w-xs" style={{ gap: 16 }}>
               <AnimatedButton
+                style={{
+                  marginTop: 8,
+                  backgroundColor: "transparent",
+
+                  overflow: "hidden",
+                }}
+                height={60}
                 title="Generate a Quote"
                 onPress={() => router.push("/generate")}
                 gradientColors={["#667eea", "#764ba2"]}
@@ -400,7 +413,7 @@ export default function FavoritesScreen() {
                     name="magic"
                     size={20}
                     color="white"
-                    animationType="bounce"
+                    // animationType="bounce"
                     library="FontAwesome"
                   />
                 }
@@ -431,9 +444,7 @@ export default function FavoritesScreen() {
   return (
     <LinearGradient
       colors={
-        colorScheme === "dark"
-          ? ["#0f0f23", "#1a1a2e"]
-          : ["#ffffff", "#f8fafc"]
+        colorScheme === "dark" ? ["#0f0f23", "#1a1a2e"] : ["#ffffff", "#f8fafc"]
       }
       style={{ flex: 1 }}
     >
@@ -442,12 +453,14 @@ export default function FavoritesScreen() {
         className="pt-14 pb-6 px-6"
         style={{
           opacity: headerAnim,
-          transform: [{
-            translateY: headerAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [-20, 0],
-            })
-          }],
+          transform: [
+            {
+              translateY: headerAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-20, 0],
+              }),
+            },
+          ],
         }}
       >
         <View className="flex-row items-center justify-between mb-2">
@@ -464,7 +477,8 @@ export default function FavoritesScreen() {
                 library="FontAwesome"
               />
               <ThemedText className={`ml-2 ${secondaryText} text-lg`}>
-                {savedQuotes.length} {savedQuotes.length === 1 ? "quote" : "quotes"} saved
+                {savedQuotes.length}{" "}
+                {savedQuotes.length === 1 ? "quote" : "quotes"} saved
               </ThemedText>
             </View>
           </View>
@@ -472,7 +486,11 @@ export default function FavoritesScreen() {
           {savedQuotes.length > 0 && (
             <GlassCard
               style={{ padding: 12, borderRadius: 12 }}
-              backgroundColor={colorScheme === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)"}
+              backgroundColor={
+                colorScheme === "dark"
+                  ? "rgba(255,255,255,0.1)"
+                  : "rgba(0,0,0,0.05)"
+              }
             >
               <AnimatedIcon
                 name="grid"
@@ -519,7 +537,6 @@ export default function FavoritesScreen() {
           }}
         >
           {savedQuotes.map((quote, index) => {
-
             return (
               <View
                 key={quote.id}
@@ -535,12 +552,16 @@ export default function FavoritesScreen() {
                       ? ["#667eea", "#764ba2"]
                       : ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]
                   }
-                  onPress={() => setSelectedQuote(selectedQuote === quote.id ? null : quote.id)}
+                  onPress={() =>
+                    setSelectedQuote(
+                      selectedQuote === quote.id ? null : quote.id
+                    )
+                  }
                   style={{
                     borderRadius: 20,
-                    overflow: 'hidden',
+                    overflow: "hidden",
                     borderWidth: selectedQuote === quote.id ? 2 : 0,
-                    borderColor: '#667eea',
+                    borderColor: "#667eea",
                   }}
                 >
                   {/* Content to be saved to gallery */}
@@ -711,7 +732,7 @@ export default function FavoritesScreen() {
                             library="FontAwesome"
                           />
                           <Text className="text-white/70 text-xs ml-1">
-                            {quote.category || 'General'}
+                            {quote.category || "General"}
                           </Text>
                         </View>
                         <Text className="text-white/70 text-xs">

@@ -10,7 +10,7 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import ViewShot from "react-native-view-shot";
 
@@ -121,73 +121,74 @@ export default function GenerateScreen() {
 
   // Load Pexels API key from environment variables
   const PEXELS_API_KEY = process.env.EXPO_PUBLIC_PEXELS_API_KEY;
-  console.log(
-    "Using Pexels API key:",
-    PEXELS_API_KEY ? "Key found" : "Key missing!"
-  );
+  // console.log(
+  //   "Using Pexels API key:",
+  //   PEXELS_API_KEY ? "Key found" : "Key missing!"
+  // );
 
-  const fetchRandomImage = useCallback(async (
-    categoryId: string = selectedImageCategory
-  ) => {
-    setImageLoading(true);
-    try {
-      let query = "nature";
-      const category = imageCategories.find((cat) => cat.id === categoryId);
-      if (category) {
-        query = category.query;
-      }
+  const fetchRandomImage = useCallback(
+    async (categoryId: string = selectedImageCategory) => {
+      setImageLoading(true);
+      try {
+        let query = "nature";
+        const category = imageCategories.find((cat) => cat.id === categoryId);
+        if (category) {
+          query = category.query;
+        }
 
-      console.log("Fetching image with query:", query);
+        console.log("Fetching image with query:", query);
 
-      // Get a random page (Pexels returns 15 results per page, we'll use first 5 pages for variety)
-      const randomPage = Math.floor(Math.random() * 5) + 1;
+        // Get a random page (Pexels returns 15 results per page, we'll use first 5 pages for variety)
+        const randomPage = Math.floor(Math.random() * 5) + 1;
 
-      console.log("Making API request to Pexels...");
-      const response = await axios.get("https://api.pexels.com/v1/search", {
-        params: {
-          query,
-          per_page: 15,
-          page: randomPage,
-          orientation: "landscape",
-        },
-        headers: {
-          Authorization: PEXELS_API_KEY,
-        },
-      });
+        console.log("Making API request to Pexels...");
+        const response = await axios.get("https://api.pexels.com/v1/search", {
+          params: {
+            query,
+            per_page: 15,
+            page: randomPage,
+            orientation: "landscape",
+          },
+          headers: {
+            Authorization: PEXELS_API_KEY,
+          },
+        });
 
-      console.log("Pexels API response status:", response.status);
+        console.log("Pexels API response status:", response.status);
 
-      if (
-        response.data &&
-        response.data.photos &&
-        response.data.photos.length > 0
-      ) {
-        // Select a random photo from the results
-        const randomIndex = Math.floor(
-          Math.random() * response.data.photos.length
-        );
-        const photo: PexelsPhoto = response.data.photos[randomIndex];
+        if (
+          response.data &&
+          response.data.photos &&
+          response.data.photos.length > 0
+        ) {
+          // Select a random photo from the results
+          const randomIndex = Math.floor(
+            Math.random() * response.data.photos.length
+          );
+          const photo: PexelsPhoto = response.data.photos[randomIndex];
 
-        console.log("Selected photo URL:", photo.src.large);
+          console.log("Selected photo URL:", photo.src.large);
 
-        // Use the large image URL (you can also use photo.src.medium or other sizes)
-        setBackgroundUrl(photo.src.large);
-      } else {
-        // Fallback to a default image if no results
+          // Use the large image URL (you can also use photo.src.medium or other sizes)
+          setBackgroundUrl(photo.src.large);
+        } else {
+          // Fallback to a default image if no results
+          setBackgroundUrl(
+            "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching image from Pexels:", error);
+        // Fallback to a default image on error
         setBackgroundUrl(
           "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
         );
+      } finally {
+        setImageLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching image from Pexels:", error);
-      // Fallback to a default image on error
-      setBackgroundUrl(
-        "https://images.pexels.com/photos/268533/pexels-photo-268533.jpeg"
-      );
-    } finally {
-      setImageLoading(false);
-    }
-  }, [PEXELS_API_KEY, imageCategories, selectedImageCategory]);
+    },
+    [PEXELS_API_KEY, imageCategories, selectedImageCategory]
+  );
 
   const fetchQuoteFromServer = async (category: QuoteCategory) => {
     setLoading(true);
@@ -263,7 +264,7 @@ export default function GenerateScreen() {
     if (quote && backgroundUrl) {
       // Ensure we have a valid URL (add https:// if missing)
       let imageUrl = backgroundUrl;
-      if (imageUrl && !imageUrl.startsWith("http")) {
+      if (imageUrl && !imageUrl.startsWith("https")) {
         imageUrl = `https:${imageUrl}`;
       }
 
@@ -327,8 +328,6 @@ export default function GenerateScreen() {
       router.push({ pathname: "/customize", params: { quoteId: newQuoteId } });
     }
   };
-
-  console.log("Current background URL:", backgroundUrl);
 
   return (
     <ErrorBoundary>
@@ -531,7 +530,9 @@ export default function GenerateScreen() {
                   {loading ? (
                     <View style={{ alignItems: "center" }}>
                       <SimpleLoader size={50} color="#67e8f9" />
-                      <Text style={{ color: "white", marginTop: 12, fontSize: 14 }}>
+                      <Text
+                        style={{ color: "white", marginTop: 12, fontSize: 14 }}
+                      >
                         Generating quote...
                       </Text>
                     </View>
@@ -557,7 +558,9 @@ export default function GenerateScreen() {
                       </Text>
                       <AnimatedButton
                         title="Try Again"
-                        onPress={() => generateNewQuoteAndImage(selectedQuoteCategory)}
+                        onPress={() =>
+                          generateNewQuoteAndImage(selectedQuoteCategory)
+                        }
                         gradientColors={commonGradients.info}
                         size="small"
                         icon={
@@ -625,7 +628,13 @@ export default function GenerateScreen() {
               <AnimatedButton
                 title="New Quote"
                 onPress={() => fetchQuoteFromServer(selectedQuoteCategory)}
-                gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [string, string, ...string[]]}
+                gradientColors={
+                  ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [
+                    string,
+                    string,
+                    ...string[],
+                  ]
+                }
                 variant="outline"
                 size="small"
                 disabled={loading}
@@ -637,13 +646,23 @@ export default function GenerateScreen() {
                     library="FontAwesome"
                   />
                 }
-                style={{ marginBottom: 12, marginHorizontal: 4, borderColor: "#0891b2" }}
+                style={{
+                  marginBottom: 12,
+                  marginHorizontal: 4,
+                  borderColor: "#0891b2",
+                }}
               />
 
               <AnimatedButton
                 title={imageLoading ? "Loading..." : "New Image"}
                 onPress={() => fetchRandomImage(selectedImageCategory)}
-                gradientColors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [string, string, ...string[]]}
+                gradientColors={
+                  ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"] as [
+                    string,
+                    string,
+                    ...string[],
+                  ]
+                }
                 variant="outline"
                 size="small"
                 disabled={imageLoading}
@@ -659,7 +678,11 @@ export default function GenerateScreen() {
                     />
                   )
                 }
-                style={{ marginBottom: 12, marginHorizontal: 4, borderColor: "#0891b2" }}
+                style={{
+                  marginBottom: 12,
+                  marginHorizontal: 4,
+                  borderColor: "#0891b2",
+                }}
               />
 
               <AnimatedButton
@@ -696,7 +719,6 @@ export default function GenerateScreen() {
               />
 
               <AnimatedButton
-
                 title="Customize"
                 onPress={handleCustomize}
                 gradientColors={commonGradients.secondary}

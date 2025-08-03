@@ -95,7 +95,7 @@ export const QuotesProvider = ({ children }: QuotesProviderProps) => {
 
     // If it's already a valid URL, return as is
     if (
-      url.startsWith("http://") ||
+
       url.startsWith("https://") ||
       url.startsWith("file://")
     ) {
