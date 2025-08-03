@@ -190,22 +190,143 @@ export default function GenerateScreen() {
     [PEXELS_API_KEY, imageCategories, selectedImageCategory]
   );
 
+  // Local fallback quotes
+  const fallbackQuotes = {
+    inspirational: [
+      { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+      { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+      { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+    ],
+    motivational: [
+      { text: "Success is not final, failure is not fatal: It is the courage to continue that counts.", author: "Winston Churchill" },
+      { text: "The only limit to our realization of tomorrow is our doubts of today.", author: "Franklin D. Roosevelt" },
+      { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    ],
+    life: [
+      { text: "In the end, it's not the years in your life that count. It's the life in your years.", author: "Abraham Lincoln" },
+      { text: "Life is what happens when you're busy making other plans.", author: "John Lennon" },
+      { text: "The purpose of our lives is to be happy.", author: "Dalai Lama" },
+    ],
+    success: [
+      { text: "Success is not the key to happiness. Happiness is the key to success. If you love what you are doing, you will be successful.", author: "Albert Schweitzer" },
+      { text: "The road to success and the road to failure are almost exactly the same.", author: "Colin R. Davis" },
+      { text: "Success usually comes to those who are too busy to be looking for it.", author: "Henry David Thoreau" },
+    ],
+    funny: [
+      { text: "I'm not lazy, I'm on energy saving mode.", author: "Unknown" },
+      { text: "I'm not arguing, I'm just explaining why I'm right.", author: "Unknown" },
+      { text: "I'm not procrastinating, I'm doing side quests.", author: "Unknown" },
+    ],
+    love: [
+      { text: "The best thing to hold onto in life is each other.", author: "Audrey Hepburn" },
+      { text: "We are most alive when we're in love.", author: "John Updike" },
+      { text: "The best and most beautiful things in this world cannot be seen or even heard, but must be felt with the heart.", author: "Helen Keller" },
+    ]
+  };
+
+  const getRandomFallbackQuote = (category: QuoteCategory) => {
+    const quotes = fallbackQuotes[category] || fallbackQuotes.inspirational;
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  };
+
   const fetchQuoteFromServer = async (category: QuoteCategory) => {
     setLoading(true);
     setError(null);
+    console.log("Starting to fetch quote with category:", category);
+
     try {
-      // Fetch quote only
-      const quoteResponse = await axios.get("http://api.quotable.io/random", {
-        params: { tags: category, maxLength: 150 },
+      // Try the Quotable API first
+      console.log("Trying Quotable API...");
+      try {
+        const response = await axios.get("https://api.quotable.io/random", {
+          params: {
+            tags: category,
+            maxLength: 150,
+          },
+          timeout: 5000,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.data && response.data.content) {
+          console.log("Successfully fetched from Quotable API");
+          setQuote({
+            text: response.data.content,
+            author: response.data.author || "Unknown",
+          });
+          return;
+        }
+      } catch (apiError) {
+        console.warn("Quotable API failed, trying fallback...");
+      }
+
+      // If Quotable fails, try ZenQuotes API
+      console.log("Trying ZenQuotes API...");
+      try {
+        const response = await axios.get("https://zenquotes.io/api/random", {
+          timeout: 5000,
+        });
+
+        if (response.data && response.data[0]?.q) {
+          console.log("Successfully fetched from ZenQuotes API");
+          setQuote({
+            text: response.data[0].q,
+            author: response.data[0].a || "Unknown",
+          });
+          return;
+        }
+      } catch (zenError) {
+        console.warn("ZenQuotes API failed, using fallback quotes...");
+      }
+
+      // If all APIs fail, use local fallback quotes
+      console.log("Using local fallback quotes");
+      const fallbackQuote = getRandomFallbackQuote(category);
+      setQuote({
+        text: fallbackQuote.text,
+        author: fallbackQuote.author,
+      });
+    } catch (error: any) {
+      let errorMessage = "Failed to fetch quote. ";
+
+      if (error.code === "ECONNABORTED") {
+        errorMessage += "Request timed out.";
+      } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage += `Server responded with status ${error.response.status}: ${error.response.statusText}`;
+        console.error("Response data:", error.response.data);
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage +=
+          "No response received from server. Check your internet connection.";
+        console.error(
+          "Request was made but no response received:",
+          error.request
+        );
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        errorMessage += error.message;
+      }
+
+      setError(errorMessage);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          params: error.config?.params,
+        },
       });
 
+      // Set a fallback quote
       setQuote({
-        text: quoteResponse.data.content,
-        author: quoteResponse.data.author,
+        text: "The only way to do great work is to love what you do.",
+        author: "Steve Jobs",
       });
-    } catch (e) {
-      setError("Failed to fetch quote. Please check your connection.");
-      console.error("Error fetching quote:", e);
     } finally {
       setLoading(false);
     }
