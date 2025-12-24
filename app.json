@@ -1,7 +1,7 @@
 {
   "expo": {
     "android": {
-      "package": "com.ghost.quotesapp",
+      "package": "com.ghost.inspirationalquotesapp",
       "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
@@ -25,7 +25,11 @@
     "primaryColor": "#667eea",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ghost.inspirationalquotesapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "web": {
       "bundler": "metro",

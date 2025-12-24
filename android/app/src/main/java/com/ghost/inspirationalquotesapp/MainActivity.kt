@@ -1,4 +1,4 @@
-package com.ghost.quotesapp
+package com.ghost.inspirationalquotesapp
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

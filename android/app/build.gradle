@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.ghost.quotesapp'
+    namespace 'com.ghost.inspirationalquotesapp'
     defaultConfig {
-        applicationId 'com.ghost.quotesapp'
+        applicationId 'com.ghost.inspirationalquotesapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 6

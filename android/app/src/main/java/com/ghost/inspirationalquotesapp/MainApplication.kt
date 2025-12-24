@@ -1,4 +1,4 @@
-package com.ghost.quotesapp
+package com.ghost.inspirationalquotesapp
 
 import android.app.Application
 import android.content.res.Configuration
